@@ -57,7 +57,7 @@ Aguarde 1 a 3 minutos.
 
 O link deverá ficar parecido com:
 
-https://CRIAAI3D.github.io/cert-generator/
+https://figazhub.github.io/certificados/
 
 ## 5. Autorizar domínio no Firebase
 
@@ -67,7 +67,7 @@ Authentication > Settings > Authorized domains
 
 Adicione:
 
-CRIAAI3D.github.io
+figazhub.github.io
 
 Se usar domínio próprio, adicione o domínio próprio também.
 
