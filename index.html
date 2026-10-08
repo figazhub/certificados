@@ -2257,6 +2257,7 @@
           state.profile = null;
           $("#appRoot").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
+          setAuthStatus("Firebase conectado. Informe seu e-mail e senha ou use o login com Google.");
           return;
         }
         await loadUserProfile(user);
@@ -2357,11 +2358,17 @@
       });
 
       $("#resetPasswordBtn").addEventListener("click", async () => {
-        const email = $("#loginEmail").value.trim().toLowerCase();
-        if (!email) return setAuthStatus("Informe o e-mail para recuperar senha.");
-        if (!state.auth) return setAuthStatus("Firebase ainda está carregando. Aguarde alguns segundos e tente novamente.");
-        await state.auth.sendPasswordResetEmail(email);
-        setAuthStatus("E-mail de recuperação enviado, se a conta existir.");
+        try {
+          const email = $("#loginEmail").value.trim().toLowerCase();
+          if (!email) return setAuthStatus("Informe o e-mail para recuperar senha.");
+          if (!state.auth) return setAuthStatus("Firebase ainda está carregando. Aguarde alguns segundos e tente novamente.");
+          setAuthStatus("Enviando e-mail de recuperação...");
+          await state.auth.sendPasswordResetEmail(email);
+          setAuthStatus("E-mail de recuperação enviado, se a conta existir.");
+        } catch (error) {
+          console.error(error);
+          setAuthStatus("Não foi possível enviar a recuperação de senha. Confira o e-mail e a configuração do Firebase.");
+        }
       });
 
       $("#logoutBtn").addEventListener("click", () => state.auth.signOut());
@@ -2369,20 +2376,28 @@
     }
 
     function init() {
-      renderProfessorFields();
-      updatePreview();
+      // O login precisa funcionar mesmo que algum componente visual do certificado falhe.
       initAuthButtons();
-      wireWorkflowActions();
+      initFirebase();
 
-      ["student", "belt", "date", "mainLogo", "notes"].forEach(id => {
-        const el = $("#" + id);
-        el.addEventListener("input", () => updatePreview());
-        el.addEventListener("change", () => updatePreview());
-      });
+      try {
+        renderProfessorFields();
+        updatePreview();
+        wireWorkflowActions();
 
-      $("#professorList").addEventListener("input", e => {
-        if (e.target.matches("[data-prof-name], [data-prof-role]")) updatePreview();
-      });
+        ["student", "belt", "date", "mainLogo", "notes"].forEach(id => {
+          const el = $("#" + id);
+          if (!el) return;
+          el.addEventListener("input", () => updatePreview());
+          el.addEventListener("change", () => updatePreview());
+        });
+
+        const professorList = $("#professorList");
+        if (professorList) {
+          professorList.addEventListener("input", e => {
+            if (e.target.matches("[data-prof-name], [data-prof-role]")) updatePreview();
+          });
+        }
 
       $("#professorList").addEventListener("click", e => {
         const btn = e.target.closest("[data-remove]");
@@ -2406,12 +2421,15 @@
         btn.addEventListener("click", () => $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" }));
       });
 
-      $$('[data-pdf]').forEach(btn => btn.addEventListener("click", handleOfficialAction));
-      window.addEventListener("resize", () => fitAll());
-      initFirebase();
+        $('[data-pdf]').forEach(btn => btn.addEventListener("click", handleOfficialAction));
+        window.addEventListener("resize", () => fitAll());
+      } catch (error) {
+        console.error("Falha ao iniciar a interface do certificado:", error);
+        setAuthStatus("Login disponível. Parte da interface do certificado apresentou um erro e será revisada.");
+      }
     }
 
-    window.addEventListener("load", () => {
+    function startApp() {
       try {
         init();
       } catch (error) {
@@ -2421,9 +2439,15 @@
         const status = document.querySelector("#authStatus");
         if (app) app.classList.add("hidden");
         if (auth) auth.classList.remove("hidden");
-        if (status) status.textContent = "Falha ao carregar o sistema. Confira o console do navegador ou atualize com Ctrl + F5.";
+        if (status) status.textContent = "Falha ao carregar o sistema. Atualize a página com Ctrl + F5.";
       }
-    });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", startApp, { once: true });
+    } else {
+      startApp();
+    }
   </script>
 </body>
 </html>
