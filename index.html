@@ -2010,9 +2010,27 @@
       const publicRef = state.db.collection("publicCertificates").doc(authCode);
       const batch = state.db.batch();
       batch.set(ref, data);
-      batch.set(publicRef, {
-        certificateId: ref.id,
-        authCode,
+      batch.set(publicRef, publicCertificatePayload(data, ref.id));
+      try {
+        await batch.commit();
+      } catch (error) {
+        // Compatibilidade apenas durante a troca das regras antigas pelas novas.
+        if (error && error.code !== "permission-denied") throw error;
+        const compatibilityBatch = state.db.batch();
+        compatibilityBatch.set(ref, data);
+        compatibilityBatch.set(publicRef, publicCertificatePayload(data, ref.id, true));
+        await compatibilityBatch.commit();
+      }
+      state.activeCertificate = { id: ref.id, ...data, createdAt: new Date(), approvedAt: new Date() };
+      updateAuthStamp();
+      await loadHistory();
+      return state.activeCertificate;
+    }
+
+    function publicCertificatePayload(data, certificateId, includeIssuerEmail = false) {
+      const publicData = {
+        certificateId,
+        authCode: data.authCode,
         student: data.student,
         beltLabel: data.beltLabel,
         date: data.date,
@@ -2022,12 +2040,9 @@
         approvedByName: data.approvedByName,
         status: "valid",
         issuedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await batch.commit();
-      state.activeCertificate = { id: ref.id, ...data, createdAt: new Date(), approvedAt: new Date() };
-      updateAuthStamp();
-      await loadHistory();
-      return state.activeCertificate;
+      };
+      if (includeIssuerEmail) publicData.issuerEmail = data.issuerEmail;
+      return publicData;
     }
 
     async function submitForApproval() {
@@ -2062,19 +2077,13 @@
         approvedByEmail: state.user.email,
         approvedByName: state.profile.name || state.user.email
       });
-      batch.set(publicRef, {
-        certificateId: ref.id,
+      batch.set(publicRef, publicCertificatePayload({
+        ...current,
         authCode,
-        student: current.student,
-        beltLabel: current.beltLabel,
-        date: current.date,
         professors: current.professors || [],
         unit: current.unit || "Extremo Norte",
-        issuerName: current.issuerName,
-        approvedByName: state.profile.name || state.user.email,
-        status: "valid",
-        issuedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+        approvedByName: state.profile.name || state.user.email
+      }, ref.id));
       await batch.commit();
       setStatus(`Certificado aprovado. Código: ${authCode}`);
       await loadPendingApprovals();
