@@ -406,6 +406,12 @@
 
     .btn svg { width: 19px; height: 19px; }
 
+    .btn:disabled,
+    .top-action:disabled {
+      cursor: wait;
+      opacity: .65;
+    }
+
     .btn-light {
       background: #fff;
       border: 1px solid #cfd6df;
@@ -833,8 +839,12 @@
       .brand-subtitle { display: none; }
       .brand-title { font-size: 15px; }
       .brand-emblem { width: 170px; height: 36px; max-width: 48vw; }
+      .top-actions { display: none; }
       .top-action span { display: none; }
       .top-action { min-width: 44px; }
+      .user-box { min-width: 0; gap: 6px; padding-left: 8px; }
+      .user-box strong { max-width: 92px; font-size: 11px; }
+      .logout-btn { padding: 7px 8px; font-size: 12px; }
       .panel-heading { margin-bottom: 18px; }
       .panel-title { font-size: 17px; }
       .actions { grid-template-columns: 1fr; }
@@ -1197,7 +1207,8 @@
         min-width: 0 !important;
         aspect-ratio: auto !important;
         border-radius: 0 !important;
-        page-break-after: always;
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
 
       .belt-svg,
@@ -1479,7 +1490,8 @@
       user: null,
       profile: null,
       activeCertificate: null,
-      lastSnapshot: ""
+      lastSnapshot: "",
+      officialActionBusy: false
     };
 
     const logoMap = {
@@ -1536,8 +1548,10 @@
 
     function formatDate(value) {
       if (!value) return "Data da certificação.";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return "Data inválida.";
       const [year, month, day] = value.split("-").map(Number);
       const date = new Date(year, month - 1, day);
+      if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return "Data inválida.";
       const formatted = new Intl.DateTimeFormat("pt-BR", {
         day: "numeric",
         month: "long",
@@ -1583,13 +1597,23 @@
 
     function makeAuthCode() {
       const year = new Date().getFullYear();
-      const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+      let random = "";
+      if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+        const bytes = new Uint8Array(9);
+        window.crypto.getRandomValues(bytes);
+        random = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+      } else {
+        random = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`.slice(0, 18).toUpperCase();
+      }
       return `EXT-${year}-${random}`;
     }
 
     function validationUrl(code) {
-      const base = `${window.location.origin}${window.location.pathname}`;
-      return `${base}?validar=${encodeURIComponent(code)}`;
+      const url = new URL(window.location.href);
+      url.search = "";
+      url.hash = "";
+      url.searchParams.set("validar", code);
+      return url.toString();
     }
 
     function formSnapshot() {
@@ -1597,6 +1621,7 @@
       return JSON.stringify({
         student: $("#student").value.trim(),
         beltKey: $("#belt").value,
+        mainLogo: $("#mainLogo").value,
         date: $("#date").value,
         professors: state.professors,
         notes: $("#notes").value.trim()
@@ -1612,6 +1637,7 @@
         studentUpper: upper($("#student").value, "NOME DO ATLETA"),
         beltKey,
         beltLabel: belt.label,
+        mainLogo: $("#mainLogo").value,
         date: $("#date").value,
         professors: state.professors.map(p => ({ name: String(p.name || "").trim(), role: String(p.role || "").trim() })).filter(p => p.name),
         notes: $("#notes").value.trim(),
@@ -1623,6 +1649,20 @@
         requiresApproval: isBlackBeltKey(beltKey),
         snapshot: formSnapshot()
       };
+    }
+
+    function validateCertificateForm() {
+      syncProfessors();
+      const student = $("#student").value.trim();
+      const date = $("#date").value;
+      const professors = state.professors.map(p => String(p.name || "").trim()).filter(Boolean);
+      if (!student) return "Informe o nome do(a) atleta.";
+      if (student.length > 160) return "O nome do(a) atleta deve ter no máximo 160 caracteres.";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || formatDate(date) === "Data inválida.") return "Informe uma data de certificação válida.";
+      if (!professors.length) return "Informe pelo menos um professor responsável.";
+      if (professors.length > 5) return "Informe no máximo cinco professores responsáveis.";
+      if ($("#notes").value.length > 2000) return "As observações devem ter no máximo 2.000 caracteres.";
+      return "";
     }
 
     function renderProfessorFields() {
@@ -1775,10 +1815,8 @@
           return;
         }
       }
-      const fallback = new Image();
-      fallback.alt = "QR Code de validação";
-      fallback.src = `https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${encodeURIComponent(url)}`;
-      target.appendChild(fallback);
+      target.textContent = "QR indisponível";
+      target.title = url;
     }
 
     function updateAuthStamp(root = document) {
@@ -1930,7 +1968,7 @@
             html2canvas: {
               scale: 3,
               useCORS: true,
-              allowTaint: true,
+              allowTaint: false,
               backgroundColor: "#ffffff",
               scrollX: 0,
               scrollY: 0,
@@ -1949,6 +1987,7 @@
       } catch (error) {
         console.error(error);
         status.textContent = "A geração automática falhou. Abrindo a janela de impressão para salvar em PDF.";
+        host.remove();
         printCertificateNow();
       } finally {
         host.remove();
@@ -1967,20 +2006,24 @@
         approvedByEmail: state.user.email,
         approvedByName: state.profile.name || state.user.email
       };
-      const ref = await state.db.collection("certificates").add(data);
-      await state.db.collection("publicCertificates").doc(authCode).set({
+      const ref = state.db.collection("certificates").doc();
+      const publicRef = state.db.collection("publicCertificates").doc(authCode);
+      const batch = state.db.batch();
+      batch.set(ref, data);
+      batch.set(publicRef, {
+        certificateId: ref.id,
         authCode,
         student: data.student,
         beltLabel: data.beltLabel,
         date: data.date,
         professors: data.professors,
         unit: data.unit,
-        issuerEmail: data.issuerEmail,
         issuerName: data.issuerName,
         approvedByName: data.approvedByName,
         status: "valid",
         issuedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      await batch.commit();
       state.activeCertificate = { id: ref.id, ...data, createdAt: new Date(), approvedAt: new Date() };
       updateAuthStamp();
       await loadHistory();
@@ -2010,26 +2053,29 @@
       if (!snap.exists) return;
       const current = snap.data();
       const authCode = current.authCode || makeAuthCode();
-      await ref.update({
+      const publicRef = state.db.collection("publicCertificates").doc(authCode);
+      const batch = state.db.batch();
+      batch.update(ref, {
         status: "approved",
         authCode,
         approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
         approvedByEmail: state.user.email,
         approvedByName: state.profile.name || state.user.email
       });
-      await state.db.collection("publicCertificates").doc(authCode).set({
+      batch.set(publicRef, {
+        certificateId: ref.id,
         authCode,
         student: current.student,
         beltLabel: current.beltLabel,
         date: current.date,
         professors: current.professors || [],
         unit: current.unit || "Extremo Norte",
-        issuerEmail: current.issuerEmail,
         issuerName: current.issuerName,
         approvedByName: state.profile.name || state.user.email,
         status: "valid",
         issuedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+      await batch.commit();
       setStatus(`Certificado aprovado. Código: ${authCode}`);
       await loadPendingApprovals();
       await loadHistory();
@@ -2050,6 +2096,7 @@
 
     async function handleOfficialAction(event) {
       if (event && typeof event.preventDefault === "function") event.preventDefault();
+      if (state.officialActionBusy) return;
       if (!state.firebaseReady) {
         setStatus("Configure o Firebase em assets/js/firebase-config.js antes de gerar certificados oficiais.");
         return;
@@ -2060,30 +2107,52 @@
       }
 
       updatePreview();
-      const snapshot = formSnapshot();
-      const beltKey = $("#belt").value;
-      const requiresApproval = isBlackBeltKey(beltKey);
-
-      if (state.activeCertificate && state.activeCertificate.status === "approved" && state.activeCertificate.snapshot === snapshot) {
-        await generatePDF(event);
+      const validationError = validateCertificateForm();
+      if (validationError) {
+        setStatus(validationError);
         return;
       }
 
-      if (requiresApproval && !canApprove()) {
-        await submitForApproval();
-        return;
-      }
+      setOfficialActionBusy(true);
+      try {
+        const snapshot = formSnapshot();
+        const beltKey = $("#belt").value;
+        const requiresApproval = isBlackBeltKey(beltKey);
 
-      if (requiresApproval && canApprove()) {
-        const confirmed = confirm("Faixa preta exige aprovação. Como seu perfil é líder/admin, deseja aprovar e gerar agora?");
-        if (!confirmed) {
+        if (state.activeCertificate && state.activeCertificate.status === "approved" && state.activeCertificate.snapshot === snapshot) {
+          await generatePDF(event);
+          return;
+        }
+
+        if (requiresApproval && !canApprove()) {
           await submitForApproval();
           return;
         }
-      }
 
-      await saveApprovedCertificate();
-      await generatePDF(event);
+        if (requiresApproval && canApprove()) {
+          const confirmed = confirm("Faixa preta exige aprovação. Como seu perfil é líder/admin, deseja aprovar e gerar agora?");
+          if (!confirmed) {
+            await submitForApproval();
+            return;
+          }
+        }
+
+        await saveApprovedCertificate();
+        await generatePDF(event);
+      } catch (error) {
+        console.error(error);
+        setStatus("Não foi possível concluir a operação. Verifique a conexão e tente novamente.");
+      } finally {
+        setOfficialActionBusy(false);
+      }
+    }
+
+    function setOfficialActionBusy(busy) {
+      state.officialActionBusy = busy;
+      $$("[data-pdf]").forEach(button => {
+        button.disabled = busy;
+        button.setAttribute("aria-busy", String(busy));
+      });
     }
 
     function updatePdfButtonText() {
@@ -2104,8 +2173,10 @@
       $("#date").value = cert.date || "";
       $("#notes").value = cert.notes || "";
       state.professors = Array.isArray(cert.professors) && cert.professors.length ? cert.professors : [{ name: "", role: "" }];
+      $("#mainLogo").value = cert.mainLogo || "logo1";
       renderProfessorFields();
       state.activeCertificate = cert;
+      if (!cert.mainLogo) state.activeCertificate.snapshot = formSnapshot();
       updatePreview();
       $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -2195,8 +2266,13 @@
         $("#adminStatus").textContent = "Informe e-mail e nome.";
         return;
       }
-      await state.db.collection("usersByEmail").doc(email).set({ email, name, unit, role, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      $("#adminStatus").textContent = "Usuário autorizado/atualizado.";
+      try {
+        await state.db.collection("usersByEmail").doc(email).set({ email, name, unit, role, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        $("#adminStatus").textContent = "Usuário autorizado/atualizado.";
+      } catch (error) {
+        console.error(error);
+        $("#adminStatus").textContent = "Não foi possível salvar o acesso. Confira as permissões e tente novamente.";
+      }
     }
 
     function wireWorkflowActions() {
@@ -2229,7 +2305,7 @@
     async function initFirebase() {
       if (isPlaceholderConfig()) {
         $("#authScreen").classList.remove("hidden");
-        setAuthStatus("Firebase ainda não configurado. Edite public/assets/js/firebase-config.js antes de publicar.");
+        setAuthStatus("Firebase ainda não configurado. Edite assets/js/firebase-config.js antes de publicar.");
         return;
       }
       try {
@@ -2295,8 +2371,14 @@
       $("#appRoot").classList.add("hidden");
       $("#validationScreen").classList.remove("hidden");
       const result = $("#validationResult");
+      const normalizedCode = String(code || "").trim().toUpperCase();
+      if (!/^EXT-\d{4}-[A-Z0-9]{6,32}$/.test(normalizedCode)) {
+        result.className = "validation-result invalid";
+        result.textContent = "Código de autenticação inválido.";
+        return;
+      }
       try {
-        const snap = await state.db.collection("publicCertificates").doc(code).get();
+        const snap = await state.db.collection("publicCertificates").doc(normalizedCode).get();
         if (!snap.exists || snap.data().status !== "valid") {
           result.className = "validation-result invalid";
           result.textContent = "Certificado não encontrado ou inválido.";
@@ -2371,7 +2453,7 @@
         }
       });
 
-      $("#logoutBtn").addEventListener("click", () => state.auth.signOut());
+      $("#logoutBtn").addEventListener("click", () => state.auth && state.auth.signOut());
       $("#saveUserProfileBtn").addEventListener("click", saveUserProfile);
     }
 
@@ -2397,31 +2479,33 @@
           professorList.addEventListener("input", e => {
             if (e.target.matches("[data-prof-name], [data-prof-role]")) updatePreview();
           });
+          professorList.addEventListener("click", e => {
+            const btn = e.target.closest("[data-remove]");
+            if (!btn) return;
+            const index = Number(btn.dataset.remove);
+            state.professors.splice(index, 1);
+            renderProfessorFields();
+            updatePreview();
+          });
         }
 
-      $("#professorList").addEventListener("click", e => {
-        const btn = e.target.closest("[data-remove]");
-        if (!btn) return;
-        const index = Number(btn.dataset.remove);
-        state.professors.splice(index, 1);
-        renderProfessorFields();
-        updatePreview();
-      });
+        const addProfessor = $("#addProfessor");
+        if (addProfessor) {
+          addProfessor.addEventListener("click", () => {
+            syncProfessors();
+            state.professors.push({ name: "", role: "" });
+            renderProfessorFields();
+            updatePreview();
+            const last = $$('[data-prof-name]').at(-1);
+            if (last) last.focus();
+          });
+        }
 
-      $("#addProfessor").addEventListener("click", () => {
-        syncProfessors();
-        state.professors.push({ name: "", role: "" });
-        renderProfessorFields();
-        updatePreview();
-        const last = $$('[data-prof-name]').at(-1);
-        if (last) last.focus();
-      });
+        $$('[data-preview]').forEach(btn => {
+          btn.addEventListener("click", () => $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" }));
+        });
 
-      $$('[data-preview]').forEach(btn => {
-        btn.addEventListener("click", () => $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" }));
-      });
-
-        $('[data-pdf]').forEach(btn => btn.addEventListener("click", handleOfficialAction));
+        $$('[data-pdf]').forEach(btn => btn.addEventListener("click", handleOfficialAction));
         window.addEventListener("resize", () => fitAll());
       } catch (error) {
         console.error("Falha ao iniciar a interface do certificado:", error);
@@ -2451,3 +2535,4 @@
   </script>
 </body>
 </html>
+
