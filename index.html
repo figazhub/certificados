@@ -2485,8 +2485,8 @@
           $("#authScreen").classList.remove("hidden");
           const usedGoogle = user.providerData.some(provider => provider.providerId === "google.com");
           state.authNotice = usedGoogle
-            ? `A conta Google ${email} foi autenticada, mas ainda não foi autorizada. Peça a um admin para cadastrá-la em “Autorizar professor”.`
-            : `O e-mail ${email} ainda não está autorizado. Peça a um admin para cadastrá-lo em “Autorizar professor”.`;
+            ? `A conta Google ${email} foi autenticada, mas ainda não foi autorizada. Peça a um professor já autorizado para cadastrá-la e a um admin para aprovar a solicitação.`
+            : `O e-mail ${email} ainda não está autorizado. Peça a um professor já autorizado para cadastrá-lo e a um admin para aprovar a solicitação.`;
           await state.auth.signOut();
           return;
         }
