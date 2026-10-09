@@ -1526,6 +1526,7 @@
       db: null,
       user: null,
       profile: null,
+      authNotice: "",
       activeCertificate: null,
       lastSnapshot: "",
       officialActionBusy: false
@@ -2466,7 +2467,9 @@
           state.profile = null;
           $("#appRoot").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
-          setAuthStatus("Firebase conectado. Informe seu e-mail e senha ou use o login com Google.");
+          const message = state.authNotice || "Firebase conectado. Informe seu e-mail e senha ou use o login com Google.";
+          state.authNotice = "";
+          setAuthStatus(message);
           return;
         }
         await loadUserProfile(user);
@@ -2480,7 +2483,11 @@
         if (!snap.exists) {
           $("#appRoot").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
-          setAuthStatus(`Login feito, mas o e-mail ${email} ainda não está autorizado.`);
+          const usedGoogle = user.providerData.some(provider => provider.providerId === "google.com");
+          state.authNotice = usedGoogle
+            ? `A conta Google ${email} foi autenticada, mas ainda não foi autorizada. Peça a um admin para cadastrá-la em “Autorizar professor”.`
+            : `O e-mail ${email} ainda não está autorizado. Peça a um admin para cadastrá-lo em “Autorizar professor”.`;
+          await state.auth.signOut();
           return;
         }
         state.profile = snap.data();
@@ -2488,7 +2495,8 @@
           state.profile = null;
           $("#appRoot").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
-          setAuthStatus("Este perfil não possui um papel permitido. O acesso é exclusivo para professores e admins.");
+          state.authNotice = "Este perfil não possui um papel permitido. O acesso é exclusivo para professores e admins.";
+          await state.auth.signOut();
           return;
         }
         $("#authScreen").classList.add("hidden");
