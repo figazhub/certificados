@@ -7,7 +7,8 @@
   <title>Gerador de Certificados | Extremo Norte</title>
   <link rel="icon" type="image/png" href="./assets/icons/favicon.png" />
   <link rel="apple-touch-icon" href="./assets/icons/icon-192.png" />
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -1962,7 +1963,7 @@
       }
 
       updateAuthStamp();
-      if (!window.html2pdf) {
+      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
         status.textContent = "Gerador automático indisponível. Abrindo a janela de impressão para salvar em PDF.";
         printCertificateNow();
         return;
@@ -1975,27 +1976,24 @@
         fitAll(host);
         await new Promise(resolve => setTimeout(resolve, 220));
 
-        await window.html2pdf()
-          .set({
-            margin: 0,
-            filename: `certificado-${slug($("#student").value)}-${state.activeCertificate.authCode}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              allowTaint: false,
-              backgroundColor: "#ffffff",
-              scrollX: 0,
-              scrollY: 0,
-              width: 1123,
-              height: 794,
-              windowWidth: 1123,
-              windowHeight: 794
-            },
-            jsPDF: { unit: "mm", format: "a4", orientation: "landscape", compress: true }
-          })
-          .from(clone)
-          .save();
+        const canvas = await window.html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          width: 1123,
+          height: 794,
+          windowWidth: 1123,
+          windowHeight: 794
+        });
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4", compress: true });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
+        pdf.save(`certificado-${slug($("#student").value)}-${state.activeCertificate.authCode}.pdf`);
 
         status.textContent = `PDF gerado com autenticação ${state.activeCertificate.authCode}.`;
       } catch (error) {
