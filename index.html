@@ -2778,6 +2778,9 @@
         });
 
         $$('[data-pdf]').forEach(btn => btn.addEventListener("click", handleOfficialAction));
+        window.addEventListener("pagehide", () => {
+          if (state.lastPdfUrl) URL.revokeObjectURL(state.lastPdfUrl);
+        }, { once: true });
         window.addEventListener("resize", () => fitAll());
       } catch (error) {
         console.error("Falha ao iniciar a interface do certificado:", error);
