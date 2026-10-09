@@ -36,12 +36,13 @@ service cloud.firestore {
 
     function validUserProfile(email, data) {
       return data.keys().hasAll(['email', 'name', 'unit', 'role', 'updatedAt'])
-        && data.keys().hasOnly(['email', 'name', 'unit', 'role', 'updatedAt'])
+        && data.keys().hasOnly(['email', 'name', 'graduation', 'unit', 'role', 'updatedAt'])
         && data.email == email
         && data.email is string
         && data.name is string
         && data.name.size() > 0
         && data.name.size() <= 160
+        && (!('graduation' in data) || (data.graduation is string && data.graduation.size() > 0 && data.graduation.size() <= 160))
         && data.unit is string
         && data.unit.size() > 0
         && data.unit.size() <= 160
@@ -298,11 +299,11 @@ service cloud.firestore {
 
     function validProfessorRequestCreate(data) {
       return data.keys().hasAll([
-          'email', 'name', 'unit', 'status', 'requestedByEmail',
+          'email', 'name', 'graduation', 'unit', 'status', 'requestedByEmail',
           'requestedByName', 'createdAt'
         ])
         && data.keys().hasOnly([
-          'email', 'name', 'unit', 'status', 'requestedByEmail',
+          'email', 'name', 'graduation', 'unit', 'status', 'requestedByEmail',
           'requestedByName', 'createdAt'
         ])
         && data.email is string
@@ -311,6 +312,9 @@ service cloud.firestore {
         && data.name is string
         && data.name.size() > 0
         && data.name.size() <= 160
+        && data.graduation is string
+        && data.graduation.size() > 0
+        && data.graduation.size() <= 160
         && data.unit is string
         && data.unit.size() > 0
         && data.unit.size() <= 160
@@ -333,6 +337,7 @@ service cloud.firestore {
         && existsAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email))
         && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.email == resource.data.email
         && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.name == resource.data.name
+        && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.graduation == resource.data.graduation
         && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.unit == resource.data.unit
         && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.role == request.resource.data.approvedRole;
     }
@@ -361,3 +366,4 @@ service cloud.firestore {
     }
   }
 }
+
