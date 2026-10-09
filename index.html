@@ -1091,6 +1091,16 @@
       gap: 8px;
     }
 
+    .workflow-item.rejected {
+      border-color: rgba(220, 38, 38, .55);
+      background: #fff1f2;
+    }
+
+    .rejection-reason {
+      color: #b42318 !important;
+      font-weight: 800;
+    }
+
     .workflow-item strong { color: #111827; }
     .workflow-item small { color: #6b7280; line-height: 1.35; }
 
@@ -1664,6 +1674,17 @@
       return `${parts[0]}.${parts.at(-1)}@extremo.com.br`;
     }
 
+    function studentLockKey(name) {
+      const normalized = String(name || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLocaleUpperCase("pt-BR")
+        .replace(/[^A-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 180);
+      return normalized ? `ALUNO-${normalized}` : "";
+    }
+
     function formatDate(value) {
       if (!value) return "Data da certificação.";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return "Data inválida.";
@@ -1752,6 +1773,7 @@
       return {
         student: $("#student").value.trim(),
         studentUpper: upper($("#student").value, "NOME DO ATLETA"),
+        studentLockKey: studentLockKey($("#student").value),
         beltKey,
         beltLabel: belt.label,
         mainLogo: $("#mainLogo").value,
@@ -2257,13 +2279,32 @@
 
     async function rejectCertificate(id) {
       const reason = prompt("Motivo da recusa/correção:") || "Solicitação recusada pelo admin.";
-      await state.db.collection("certificates").doc(id).update({
+      const certificateRef = state.db.collection("certificates").doc(id);
+      const snapshot = await certificateRef.get();
+      if (!snapshot.exists || snapshot.data().status !== "pending") return;
+      const certificate = snapshot.data();
+      const lockKey = certificate.studentLockKey || studentLockKey(certificate.student || certificate.studentUpper);
+      if (!lockKey) throw new Error("Não foi possível identificar o nome do atleta para a trava de recusa.");
+      const lockRef = state.db.collection("rejectedStudentLocks").doc(lockKey);
+      const lockUntil = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+      const batch = state.db.batch();
+      batch.update(certificateRef, {
         status: "rejected",
         rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
         rejectedByEmail: state.user.email,
         rejectedByName: state.profile.name || state.user.email,
-        rejectedReason: reason
+        rejectedReason: reason,
+        studentLockKey: lockKey
       });
+      batch.set(lockRef, {
+        certificateId: id,
+        studentLockKey: lockKey,
+        studentUpper: certificate.studentUpper || upper(certificate.student, "NOME DO ATLETA"),
+        rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lockUntil
+      });
+      await batch.commit();
+      setStatus(`Faixa recusada. ${certificate.student || "Este atleta"} ficará bloqueado para nova emissão até ${lockUntil.toLocaleDateString("pt-BR")}.`);
       await loadPendingApprovals();
       await loadHistory();
     }
@@ -2285,6 +2326,17 @@
       if (validationError) {
         setStatus(validationError);
         return;
+      }
+
+      const lockKey = studentLockKey($("#student").value);
+      const lockSnap = await state.db.collection("rejectedStudentLocks").doc(lockKey).get();
+      if (lockSnap.exists) {
+        const lock = lockSnap.data();
+        const lockUntil = lock.lockUntil && lock.lockUntil.toDate ? lock.lockUntil.toDate() : null;
+        if (lockUntil && lockUntil > new Date()) {
+          setStatus(`A emissão para este nome está bloqueada até ${lockUntil.toLocaleDateString("pt-BR")} por uma recusa anterior.`);
+          return;
+        }
       }
 
       setOfficialActionBusy(true);
@@ -2364,10 +2416,14 @@
     function certCard(cert, id, includeApprovalActions = false) {
       const statusText = cert.status === "approved" ? "aprovado" : cert.status === "pending" ? "pendente" : "recusado";
       const canGenerate = cert.status === "approved";
+      const rejectionReason = cert.status === "rejected" && cert.rejectedReason
+        ? `<small class="rejection-reason">Motivo da recusa: ${escapeHtml(cert.rejectedReason)}</small>`
+        : "";
       return `
-        <div class="workflow-item" data-cert-id="${escapeHtml(id)}">
+        <div class="workflow-item ${cert.status === "rejected" ? "rejected" : ""}" data-cert-id="${escapeHtml(id)}">
           <strong>${escapeHtml(cert.student || "Atleta sem nome")}</strong>
           <small>${escapeHtml(cert.beltLabel || "")}${cert.unit ? " - " + escapeHtml(cert.unit) : ""}<br>Status: ${statusText}${cert.authCode ? " - Código: " + escapeHtml(cert.authCode) : ""}</small>
+          ${rejectionReason}
           <div class="workflow-actions">
             <button class="mini-btn secondary" type="button" data-load-cert="${escapeHtml(id)}">Carregar</button>
             ${canGenerate ? `<button class="mini-btn" type="button" data-generate-cert="${escapeHtml(id)}">Gerar PDF</button>` : ""}
@@ -2415,7 +2471,7 @@
                     <td>${escapeHtml(doc.student || "Atleta sem nome")}</td>
                     <td>${escapeHtml(formatShortDate(doc.date))}</td>
                     <td>${escapeHtml(doc.beltLabel || "-")}</td>
-                    <td>${escapeHtml(doc.status === "approved" ? "Aprovado" : doc.status === "pending" ? "Pendente" : "Recusado")}</td>
+                    <td>${escapeHtml(doc.status === "approved" ? "Aprovado" : doc.status === "pending" ? "Pendente" : "Recusado")}${doc.status === "rejected" && doc.rejectedReason ? `<br><small class="rejection-reason">${escapeHtml(doc.rejectedReason)}</small>` : ""}</td>
                     <td><button class="mini-btn secondary" type="button" data-load-cert="${escapeHtml(doc.id)}">Carregar</button></td>
                   </tr>`).join("")}</tbody>
               </table>
