@@ -2693,7 +2693,7 @@
     }
 
     function initAuthButtons() {
-      $("#emailLoginBtn").addEventListener("click", async () => {
+      const loginWithEmail = async () => {
         try {
           if (!state.auth) return setAuthStatus("Firebase ainda está carregando. Aguarde alguns segundos e tente novamente.");
           setAuthStatus("Entrando...");
@@ -2702,6 +2702,15 @@
           console.error(error);
           setAuthStatus("Falha no login. Confira e-mail e senha.");
         }
+      };
+
+      $("#emailLoginBtn").addEventListener("click", loginWithEmail);
+      [$("#loginEmail"), $("#loginPassword")].forEach(input => {
+        input.addEventListener("keydown", event => {
+          if (event.key !== "Enter" || event.isComposing) return;
+          event.preventDefault();
+          loginWithEmail();
+        });
       });
 
       $("#resetPasswordBtn").addEventListener("click", async () => {
