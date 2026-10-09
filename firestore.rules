@@ -14,15 +14,11 @@ service cloud.firestore {
     }
 
     function authorized() {
-      return signedIn() && exists(userDoc());
+      return signedIn() && exists(userDoc()) && validRole(get(userDoc()).data.role);
     }
 
     function profile() {
       return get(userDoc()).data;
-    }
-
-    function isLeader() {
-      return authorized() && (profile().role == 'lider' || profile().role == 'admin');
     }
 
     function isAdmin() {
@@ -30,7 +26,7 @@ service cloud.firestore {
     }
 
     function validRole(role) {
-      return role == 'professor' || role == 'lider' || role == 'admin';
+      return role == 'professor' || role == 'admin';
     }
 
     // Mantém clientes em cache funcionando apenas durante o rollout do novo esquema.
@@ -120,8 +116,7 @@ service cloud.firestore {
         && data.professors is list
         && data.professors.size() > 0
         && data.professors.size() <= 5
-        && data.notes is string
-        && data.notes.size() <= 2000
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000))
         && data.unit == profile().unit
         && data.issuerEmail == userEmail()
         && data.issuerName == profile().name
@@ -135,7 +130,7 @@ service cloud.firestore {
     function validApprovedCreate(data) {
       return data.keys().hasAll([
           'student', 'studentUpper', 'beltKey', 'beltLabel', 'date',
-          'professors', 'notes', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
+          'professors', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
           'status', 'requiresApproval', 'snapshot', 'authCode', 'createdAt',
           'approvedAt', 'approvedByEmail', 'approvedByName'
         ])
@@ -151,7 +146,7 @@ service cloud.firestore {
         && data.approvedAt == request.time
         && data.approvedByEmail == userEmail()
         && data.approvedByName == profile().name
-        && (!isBlackBelt(data.beltKey) || isLeader())
+        && (!isBlackBelt(data.beltKey) || isAdmin())
         && (existsAfter(/databases/$(database)/documents/publicCertificates/$(data.authCode))
           || legacyClientWindow());
     }
@@ -159,7 +154,7 @@ service cloud.firestore {
     function validPendingCreate(data) {
       return data.keys().hasAll([
           'student', 'studentUpper', 'beltKey', 'beltLabel', 'date',
-          'professors', 'notes', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
+          'professors', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
           'status', 'requiresApproval', 'snapshot', 'authCode', 'createdAt', 'requestedAt'
         ])
         && data.keys().hasOnly([
@@ -250,11 +245,11 @@ service cloud.firestore {
         && data.student is string
         && data.student.size() > 0
         && validBeltLabel(data.beltLabel)
-        && (!isBlackBeltLabel(data.beltLabel) || isLeader())
+        && (!isBlackBeltLabel(data.beltLabel) || isAdmin())
         && data.professors is list
         && data.professors.size() > 0
         && data.professors.size() <= 5
-        && (data.issuerEmail == userEmail() || isLeader())
+        && (data.issuerEmail == userEmail() || isAdmin())
         && data.status == 'valid'
         && data.issuedAt == request.time;
     }
@@ -271,8 +266,8 @@ service cloud.firestore {
     }
 
     match /usersByEmail/{email} {
-      allow get: if authorized() && (email == userEmail() || isLeader());
-      allow list: if isLeader();
+      allow get: if authorized() && (email == userEmail() || isAdmin());
+      allow list: if isAdmin();
       allow create, update: if isAdmin() && validUserProfile(email, request.resource.data);
       allow delete: if isAdmin();
     }
@@ -283,9 +278,9 @@ service cloud.firestore {
         && (validApprovedCreate(request.resource.data) || validPendingCreate(request.resource.data));
 
       allow read: if authorized()
-        && (isLeader() || resource.data.issuerEmail == userEmail());
+        && (isAdmin() || resource.data.issuerEmail == userEmail());
 
-      allow update: if isLeader() && (validApproval(certId) || validRejection());
+      allow update: if isAdmin() && (validApproval(certId) || validRejection());
       allow delete: if isAdmin();
     }
 
@@ -295,7 +290,71 @@ service cloud.firestore {
       allow create: if authorized()
         && (validPublicCreate(authCode, request.resource.data)
           || validLegacyPublicCreate(authCode, request.resource.data));
-      allow update: if isLeader() && validRevocation();
+      allow update: if isAdmin() && validRevocation();
+      allow delete: if isAdmin();
+    }
+
+    function validProfessorRequestCreate(data) {
+      return data.keys().hasAll([
+          'email', 'name', 'unit', 'status', 'requestedByEmail',
+          'requestedByName', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'email', 'name', 'unit', 'status', 'requestedByEmail',
+          'requestedByName', 'createdAt'
+        ])
+        && data.email is string
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.email.size() <= 254
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 160
+        && data.unit is string
+        && data.unit.size() > 0
+        && data.unit.size() <= 160
+        && data.status == 'pending'
+        && data.requestedByEmail == userEmail()
+        && data.requestedByName == profile().name
+        && data.createdAt == request.time;
+    }
+
+    function validProfessorApproval() {
+      return resource.data.status == 'pending'
+        && request.resource.data.status == 'approved'
+        && validRole(request.resource.data.approvedRole)
+        && request.resource.data.reviewedAt == request.time
+        && request.resource.data.reviewedByEmail == userEmail()
+        && request.resource.data.reviewedByName == profile().name
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'approvedRole', 'reviewedAt', 'reviewedByEmail', 'reviewedByName'
+        ])
+        && existsAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email))
+        && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.email == resource.data.email
+        && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.name == resource.data.name
+        && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.unit == resource.data.unit
+        && getAfter(/databases/$(database)/documents/usersByEmail/$(resource.data.email)).data.role == request.resource.data.approvedRole;
+    }
+
+    function validProfessorRejection() {
+      return resource.data.status == 'pending'
+        && request.resource.data.status == 'rejected'
+        && request.resource.data.rejectedReason is string
+        && request.resource.data.rejectedReason.size() > 0
+        && request.resource.data.rejectedReason.size() <= 1000
+        && request.resource.data.reviewedAt == request.time
+        && request.resource.data.reviewedByEmail == userEmail()
+        && request.resource.data.reviewedByName == profile().name
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status', 'rejectedReason', 'reviewedAt', 'reviewedByEmail', 'reviewedByName'
+        ]);
+    }
+
+    match /professorRequests/{requestId} {
+      allow create: if authorized() && validProfessorRequestCreate(request.resource.data);
+      allow read: if authorized()
+        && (isAdmin() || resource.data.requestedByEmail == userEmail());
+      allow update: if isAdmin()
+        && (validProfessorApproval() || validProfessorRejection());
       allow delete: if isAdmin();
     }
   }
