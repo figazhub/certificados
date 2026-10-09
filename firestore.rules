@@ -101,6 +101,16 @@ service cloud.firestore {
         || (key == 'preta-4-grau' && label == 'FAIXA PRETA 4º GRAU');
     }
 
+    function validStudentLockKey(key) {
+      return key is string
+        && key.matches('^ALUNO-[A-Z0-9-]{1,180}$');
+    }
+
+    function studentIsNotLocked(data) {
+      return !exists(/databases/$(database)/documents/rejectedStudentLocks/$(data.studentLockKey))
+        || get(/databases/$(database)/documents/rejectedStudentLocks/$(data.studentLockKey)).data.lockUntil <= request.time;
+    }
+
     function validCertificateCore(data) {
       return data.student is string
         && data.student.size() > 0
@@ -108,6 +118,7 @@ service cloud.firestore {
         && data.studentUpper is string
         && data.studentUpper.size() > 0
         && data.studentUpper.size() <= 200
+        && validStudentLockKey(data.studentLockKey)
         && data.beltKey is string
         && data.beltLabel is string
         && validBelt(data.beltKey, data.beltLabel)
@@ -125,18 +136,19 @@ service cloud.firestore {
         && data.requiresApproval == isBlackBelt(data.beltKey)
         && data.snapshot is string
         && data.snapshot.size() <= 10000
-        && data.createdAt == request.time;
+        && data.createdAt == request.time
+        && studentIsNotLocked(data);
     }
 
     function validApprovedCreate(data) {
       return data.keys().hasAll([
-          'student', 'studentUpper', 'beltKey', 'beltLabel', 'date',
+          'student', 'studentUpper', 'studentLockKey', 'beltKey', 'beltLabel', 'date',
           'professors', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
           'status', 'requiresApproval', 'snapshot', 'authCode', 'createdAt',
           'approvedAt', 'approvedByEmail', 'approvedByName'
         ])
         && data.keys().hasOnly([
-          'student', 'studentUpper', 'beltKey', 'beltLabel', 'mainLogo', 'date',
+          'student', 'studentUpper', 'studentLockKey', 'beltKey', 'beltLabel', 'mainLogo', 'date',
           'professors', 'notes', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
           'status', 'requiresApproval', 'snapshot', 'authCode', 'createdAt',
           'approvedAt', 'approvedByEmail', 'approvedByName'
@@ -154,12 +166,12 @@ service cloud.firestore {
 
     function validPendingCreate(data) {
       return data.keys().hasAll([
-          'student', 'studentUpper', 'beltKey', 'beltLabel', 'date',
+          'student', 'studentUpper', 'studentLockKey', 'beltKey', 'beltLabel', 'date',
           'professors', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
           'status', 'requiresApproval', 'snapshot', 'authCode', 'createdAt', 'requestedAt'
         ])
         && data.keys().hasOnly([
-          'student', 'studentUpper', 'beltKey', 'beltLabel', 'mainLogo', 'date',
+          'student', 'studentUpper', 'studentLockKey', 'beltKey', 'beltLabel', 'mainLogo', 'date',
           'professors', 'notes', 'unit', 'issuerEmail', 'issuerName', 'issuerRole',
           'status', 'requiresApproval', 'snapshot', 'authCode', 'createdAt', 'requestedAt'
         ])
@@ -186,7 +198,7 @@ service cloud.firestore {
             && getAfter(/databases/$(database)/documents/publicCertificates/$(request.resource.data.authCode)).data.certificateId == certId));
     }
 
-    function validRejection() {
+    function validRejection(certId) {
       return resource.data.status == 'pending'
         && request.resource.data.status == 'rejected'
         && request.resource.data.authCode == ''
@@ -197,8 +209,27 @@ service cloud.firestore {
         && request.resource.data.rejectedReason.size() > 0
         && request.resource.data.rejectedReason.size() <= 1000
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'status', 'rejectedAt', 'rejectedByEmail', 'rejectedByName', 'rejectedReason'
-        ]);
+          'status', 'rejectedAt', 'rejectedByEmail', 'rejectedByName', 'rejectedReason', 'studentLockKey'
+        ])
+        && validStudentLockKey(request.resource.data.studentLockKey)
+        && existsAfter(/databases/$(database)/documents/rejectedStudentLocks/$(request.resource.data.studentLockKey))
+        && getAfter(/databases/$(database)/documents/rejectedStudentLocks/$(request.resource.data.studentLockKey)).data.certificateId == certId;
+    }
+
+    function validRejectedStudentLock(studentKey) {
+      let data = request.resource.data;
+      let certificate = getAfter(/databases/$(database)/documents/certificates/$(data.certificateId)).data;
+      return data.keys().hasOnly(['certificateId', 'studentLockKey', 'studentUpper', 'rejectedAt', 'lockUntil'])
+        && data.keys().hasAll(['certificateId', 'studentLockKey', 'studentUpper', 'rejectedAt', 'lockUntil'])
+        && data.certificateId is string
+        && existsAfter(/databases/$(database)/documents/certificates/$(data.certificateId))
+        && certificate.status == 'rejected'
+        && data.studentLockKey == studentKey
+        && data.studentLockKey == certificate.studentLockKey
+        && data.studentUpper == certificate.studentUpper
+        && data.rejectedAt == request.time
+        && data.lockUntil > request.time + duration.value(719, 'h')
+        && data.lockUntil < request.time + duration.value(721, 'h');
     }
 
     function certificateAfter(certId) {
@@ -283,7 +314,14 @@ service cloud.firestore {
       allow read: if authorized()
         && (isAdmin() || resource.data.issuerEmail == userEmail());
 
-      allow update: if isAdmin() && (validApproval(certId) || validRejection());
+      allow update: if isAdmin() && (validApproval(certId) || validRejection(certId));
+      allow delete: if isAdmin();
+    }
+
+    match /rejectedStudentLocks/{studentKey} {
+      allow get: if authorized();
+      allow list: if false;
+      allow create, update: if isAdmin() && validRejectedStudentLock(studentKey);
       allow delete: if isAdmin();
     }
 
