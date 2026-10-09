@@ -232,8 +232,31 @@
       box-shadow: 0 13px 35px rgba(16, 24, 40, .11);
       padding: 22px 18px 18px;
       align-self: start;
+      overflow: visible;
+    }
+
+    /* O formulário fica inteiramente visível; somente assinaturas extras podem rolar. */
+    .form-panel.has-extra-professors {
       max-height: calc(100vh - 150px);
-      overflow: auto;
+      overflow-y: auto;
+      scrollbar-gutter: stable;
+    }
+
+    .workspace {
+      min-width: 0;
+    }
+
+    .workspace-page {
+      display: none;
+      min-width: 0;
+    }
+
+    .workspace-page.active {
+      display: block;
+    }
+
+    .workspace-page > .workflow-box {
+      min-height: min(620px, calc(100vh - 160px));
     }
 
     .panel-heading {
@@ -793,10 +816,6 @@
         margin-top: 4px;
       }
 
-      .top-actions .top-action[data-preview] {
-        display: none;
-      }
-
       .top-action {
         min-width: auto;
         padding: 0 12px;
@@ -816,6 +835,7 @@
 
       .form-panel {
         max-height: none;
+        overflow: visible;
         margin-bottom: 14px;
       }
 
@@ -1036,6 +1056,32 @@
       gap: 10px;
     }
 
+    .history-table-wrap { overflow-x: auto; }
+
+    .history-table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 11px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+
+    .history-table th {
+      color: #4b5563;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .history-table td:last-child { white-space: nowrap; }
+
     .workflow-item {
       border: 1px solid #e5e7eb;
       background: #fff;
@@ -1220,6 +1266,8 @@
 
       .app,
       .main,
+      .workspace,
+      .workspace-page.active,
       .preview-area,
       .certificate-shell {
         display: block !important;
@@ -1269,10 +1317,6 @@
         </div>
         <div class="auth-buttons">
           <button class="btn btn-orange" type="button" id="emailLoginBtn">Entrar</button>
-          <button class="btn btn-light" type="button" id="createAccountBtn">Criar conta</button>
-        </div>
-        <div class="auth-buttons">
-          <button class="btn btn-light" type="button" id="googleLoginBtn">Entrar com Google</button>
           <button class="btn btn-light" type="button" id="resetPasswordBtn">Recuperar senha</button>
         </div>
         <div class="auth-status" id="authStatus"></div>
@@ -1300,21 +1344,21 @@
       </div>
 
       <div class="top-actions">
-        <button class="top-action" type="button" data-scroll-target="historyPanel">
+        <button class="top-action" type="button" data-page-target="historyPage">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>
           <span>Histórico</span>
         </button>
-        <button class="top-action hidden" type="button" id="certificateQueueButton" data-scroll-target="pendingPanel">
+        <button class="top-action hidden" type="button" id="certificateQueueButton" data-page-target="pendingPage">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v18H7z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
           <span id="certificateQueueLabel">Pendentes</span>
         </button>
-        <button class="top-action hidden" type="button" id="professorAccessButton" data-scroll-target="professorRequestPanel">
+        <button class="top-action hidden" type="button" id="professorAccessButton" data-page-target="professorRequestPage">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c.8-4 2.8-6 6-6 1.2 0 2.2.3 3 .8M17 11v6M14 14h6"/></svg>
           <span id="professorAccessLabel">Professores</span>
         </button>
-        <button class="top-action" type="button" data-preview>
+        <button class="top-action" type="button" data-last-pdf>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-          <span>Pré-visualizar</span>
+          <span>Visualizar PDF</span>
         </button>
         <button class="top-action" type="button" data-pdf>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -1357,7 +1401,7 @@
     </aside>
 
     <main class="main">
-      <section class="form-panel">
+      <section class="form-panel" id="certificateFormPanel">
         <div class="panel-heading">
           <span class="panel-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l3 3v15H7z"/><path d="M14 3v4h4"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
@@ -1422,9 +1466,9 @@
         </div>
 
         <div class="actions">
-          <button class="btn btn-light" type="button" data-preview>
+          <button class="btn btn-light" type="button" data-last-pdf>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-            Visualizar
+            Visualizar PDF
           </button>
           <button class="btn btn-orange" type="button" data-pdf>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -1439,35 +1483,10 @@
 
         <div class="status" id="status"></div>
 
-        <div class="workflow-panel" id="workflowPanel">
-          <div class="workflow-box" id="historyPanel">
-            <h2>Histórico de certificados</h2>
-            <div class="workflow-list" id="historyList">Carregando histórico...</div>
-          </div>
-
-          <div class="workflow-box hidden" id="pendingPanel">
-            <h2 id="pendingTitle">Certificados pendentes de aprovação</h2>
-            <div class="workflow-list" id="pendingList">Nenhuma solicitação carregada.</div>
-          </div>
-
-          <div class="workflow-box hidden" id="professorRequestPanel">
-            <h2>Cadastrar professor</h2>
-            <div class="admin-form">
-              <input id="requestProfessorEmail" type="email" placeholder="E-mail do novo professor" />
-              <input id="requestProfessorName" type="text" placeholder="Nome do professor" />
-              <input id="requestProfessorUnit" type="text" placeholder="Unidade / polo" />
-              <button class="mini-btn" type="button" id="submitProfessorRequestBtn">Enviar cadastro para aprovação</button>
-              <div class="firebase-status" id="professorRequestStatus"></div>
-            </div>
-          </div>
-
-          <div class="workflow-box hidden" id="adminPanel">
-            <h2>Autorizar professor</h2>
-            <div class="workflow-list" id="professorRequestList">Nenhuma solicitação carregada.</div>
-          </div>
-        </div>
       </section>
 
+      <section class="workspace">
+        <section class="workspace-page active" id="certificatePage">
       <section class="preview-area" id="previewArea">
         <div class="certificate-shell">
           <article class="certificate" id="certificate">
@@ -1505,11 +1524,49 @@
           </article>
         </div>
       </section>
+        </section>
+
+        <section class="workspace-page" id="historyPage">
+          <div class="workflow-box">
+            <h2>Histórico de certificados</h2>
+            <div class="workflow-list" id="historyList">Carregando histórico...</div>
+          </div>
+        </section>
+
+        <section class="workspace-page" id="pendingPage">
+          <div class="workflow-box" id="pendingPanel">
+            <h2 id="pendingTitle">Certificados pendentes de aprovação</h2>
+            <div class="workflow-list" id="pendingList">Nenhuma solicitação carregada.</div>
+          </div>
+        </section>
+
+        <section class="workspace-page" id="professorRequestPage">
+          <div class="workflow-box" id="professorRequestPanel">
+            <h2 id="professorRequestTitle">Cadastrar professor</h2>
+            <p class="firebase-status" id="professorRequestHelp">O e-mail institucional é gerado pelo nome. Após a autorização, a conta de acesso precisa ser provisionada com segurança no Firebase.</p>
+            <div class="admin-form">
+              <input id="requestProfessorName" type="text" placeholder="Nome completo do professor" />
+              <input id="requestProfessorEmail" type="email" placeholder="E-mail institucional gerado automaticamente" readonly />
+              <input id="requestProfessorGraduation" type="text" placeholder="Graduação do professor" />
+              <input id="requestProfessorUnit" type="text" placeholder="Unidade / polo" />
+              <button class="mini-btn" type="button" id="submitProfessorRequestBtn">Enviar cadastro para aprovação</button>
+              <div class="firebase-status" id="professorRequestStatus"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="workspace-page" id="adminPage">
+          <div class="workflow-box" id="adminPanel">
+            <h2>Autorizar professor</h2>
+            <div class="workflow-list" id="professorRequestList">Nenhuma solicitação carregada.</div>
+          </div>
+        </section>
+      </section>
     </main>
   </div>
 
   <div class="mobile-actions">
-    <button class="btn btn-light" type="button" data-preview>Visualizar</button>
+    <button class="btn btn-light" type="button" data-last-pdf>Visualizar PDF</button>
     <button class="btn btn-orange" type="button" data-pdf>Gerar PDF</button>
   </div>
 
@@ -1528,6 +1585,7 @@
       profile: null,
       authNotice: "",
       activeCertificate: null,
+      lastPdfUrl: "",
       lastSnapshot: "",
       officialActionBusy: false
     };
@@ -1584,6 +1642,19 @@
     function upper(value, fallback) {
       const clean = String(value || "").trim();
       return (clean || fallback).toLocaleUpperCase("pt-BR");
+    }
+
+    function institutionalEmail(name) {
+      const parts = String(name || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, " ")
+        .trim()
+        .split(/[\s-]+/)
+        .filter(Boolean);
+      if (parts.length < 2) return "";
+      return `${parts[0]}.${parts.at(-1)}@extremo.com.br`;
     }
 
     function formatDate(value) {
@@ -1706,6 +1777,9 @@
 
     function renderProfessorFields() {
       const list = $("#professorList");
+      const panel = $("#certificateFormPanel");
+      if (!list || !panel) return;
+      panel.classList.toggle("has-extra-professors", state.professors.length > 1);
       list.innerHTML = "";
 
       state.professors.forEach((prof, index) => {
@@ -1729,6 +1803,16 @@
         `;
         list.appendChild(card);
       });
+    }
+
+    function showWorkspacePage(pageId) {
+      const page = document.getElementById(pageId);
+      if (!page) return;
+      $$(".workspace-page").forEach(item => item.classList.toggle("active", item === page));
+      if (pageId === "historyPage") loadHistory();
+      if (pageId === "pendingPage") loadPendingApprovals();
+      if (pageId === "adminPage") loadProfessorRequests();
+      page.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function syncProfessors() {
@@ -1984,8 +2068,24 @@
     }
 
     function printCertificateNow() {
+      showWorkspacePage("certificatePage");
       updatePreview();
       window.print();
+    }
+
+    function openLastPdf() {
+      if (!state.lastPdfUrl) {
+        showWorkspacePage("certificatePage");
+        setStatus("Gere o PDF primeiro. A visualização fica disponível enquanto esta sessão estiver aberta.");
+        return;
+      }
+      const link = document.createElement("a");
+      link.href = state.lastPdfUrl;
+      link.target = "_blank";
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
 
     async function generatePDF(event) {
@@ -2029,9 +2129,19 @@
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
         pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
-        pdf.save(`certificado-${slug($("#student").value)}-${state.activeCertificate.authCode}.pdf`);
+        const filename = `certificado-${slug($("#student").value)}-${state.activeCertificate.authCode}.pdf`;
+        const blob = pdf.output("blob");
+        if (state.lastPdfUrl) URL.revokeObjectURL(state.lastPdfUrl);
+        state.lastPdfUrl = URL.createObjectURL(blob);
+        const download = document.createElement("a");
+        download.href = state.lastPdfUrl;
+        download.download = filename;
+        document.body.appendChild(download);
+        download.click();
+        download.remove();
 
         status.textContent = `PDF gerado com autenticação ${state.activeCertificate.authCode}.`;
+        printCertificateNow();
       } catch (error) {
         console.error(error);
         status.textContent = "A geração automática falhou. Abrindo a janela de impressão para salvar em PDF.";
@@ -2234,7 +2344,7 @@
       state.activeCertificate = cert;
       state.activeCertificate.snapshot = formSnapshot();
       updatePreview();
-      $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" });
+      showWorkspacePage("certificatePage");
     }
 
     function formatShortDate(value) {
@@ -2283,7 +2393,29 @@
           const tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
           return tb - ta;
         });
-        list.innerHTML = docs.length ? docs.map(doc => certCard(doc, doc.id, false)).join("") : "Nenhum certificado registrado ainda.";
+        if (!docs.length) {
+          list.textContent = "Nenhum certificado registrado ainda.";
+          return;
+        }
+        if (isAdmin()) {
+          list.innerHTML = `
+            <div class="history-table-wrap">
+              <table class="history-table">
+                <thead><tr><th>Professor</th><th>Nome do aluno</th><th>Data da graduação</th><th>Faixa</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody>${docs.map(doc => `
+                  <tr>
+                    <td>${escapeHtml(doc.issuerName || doc.issuerEmail || "-")}</td>
+                    <td>${escapeHtml(doc.student || "Atleta sem nome")}</td>
+                    <td>${escapeHtml(formatShortDate(doc.date))}</td>
+                    <td>${escapeHtml(doc.beltLabel || "-")}</td>
+                    <td>${escapeHtml(doc.status === "approved" ? "Aprovado" : doc.status === "pending" ? "Pendente" : "Recusado")}</td>
+                    <td><button class="mini-btn secondary" type="button" data-load-cert="${escapeHtml(doc.id)}">Carregar</button></td>
+                  </tr>`).join("")}</tbody>
+              </table>
+            </div>`;
+        } else {
+          list.innerHTML = docs.map(doc => certCard(doc, doc.id, false)).join("");
+        }
       } catch (error) {
         console.error(error);
         list.textContent = "Não foi possível carregar o histórico. Confira as regras do Firestore.";
@@ -2323,7 +2455,7 @@
       return `
         <div class="workflow-item" data-request-id="${escapeHtml(id)}">
           <strong>${escapeHtml(request.name || "Professor sem nome")}</strong>
-          <small>${escapeHtml(request.email || "")} - ${escapeHtml(request.unit || "Extremo Norte")}<br>Solicitado por ${escapeHtml(request.requestedByName || request.requestedByEmail || "")}</small>
+          <small>${escapeHtml(request.email || "")} - ${escapeHtml(request.graduation || "Graduação não informada")} - ${escapeHtml(request.unit || "Extremo Norte")}<br>Solicitado por ${escapeHtml(request.requestedByName || request.requestedByEmail || "")}</small>
           <div class="request-actions">
             <button class="mini-btn" type="button" data-approve-professor="${escapeHtml(id)}" data-role="professor">Aprovar como professor</button>
             <button class="mini-btn secondary" type="button" data-approve-professor="${escapeHtml(id)}" data-role="admin">Aprovar como admin</button>
@@ -2335,24 +2467,26 @@
     async function submitProfessorRequest() {
       if (!state.user || !state.profile) return;
       const status = $("#professorRequestStatus");
-      const email = $("#requestProfessorEmail").value.trim().toLowerCase();
       const name = $("#requestProfessorName").value.trim();
+      const email = institutionalEmail(name);
+      const graduation = $("#requestProfessorGraduation").value.trim();
       const unit = $("#requestProfessorUnit").value.trim() || state.profile.unit || "Extremo Norte";
-      if (!/^\S+@\S+\.\S+$/.test(email) || !name) {
-        status.textContent = "Informe nome e e-mail válidos.";
+      if (!email || !graduation) {
+        status.textContent = "Informe nome completo e graduação para gerar o cadastro.";
         return;
       }
       status.textContent = "Enviando cadastro...";
       try {
         await state.db.collection("professorRequests").add({
-          email, name, unit, status: "pending",
+          email, name, graduation, unit, status: "pending",
           requestedByEmail: state.user.email,
           requestedByName: state.profile.name || state.user.email,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        status.textContent = "Cadastro enviado ao admin para definição do perfil e autorização.";
+        status.textContent = `Cadastro enviado para aprovação. E-mail institucional: ${email}.`;
         $("#requestProfessorEmail").value = "";
         $("#requestProfessorName").value = "";
+        $("#requestProfessorGraduation").value = "";
       } catch (error) {
         console.error(error);
         status.textContent = "Não foi possível enviar o cadastro.";
@@ -2382,7 +2516,7 @@
       const profileRef = state.db.collection("usersByEmail").doc(String(request.email).toLowerCase());
       const batch = state.db.batch();
       batch.set(profileRef, {
-        email: String(request.email).toLowerCase(), name: request.name, unit: request.unit, role,
+        email: String(request.email).toLowerCase(), name: request.name, graduation: request.graduation, unit: request.unit, role,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       batch.update(requestRef, {
@@ -2471,7 +2605,7 @@
           state.profile = null;
           $("#appRoot").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
-          const message = state.authNotice || "Firebase conectado. Informe seu e-mail e senha ou use o login com Google.";
+          const message = state.authNotice || "Firebase conectado. Informe seu e-mail e senha autorizados.";
           state.authNotice = "";
           setAuthStatus(message);
           return;
@@ -2487,10 +2621,7 @@
         if (!snap.exists) {
           $("#appRoot").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
-          const usedGoogle = user.providerData.some(provider => provider.providerId === "google.com");
-          state.authNotice = usedGoogle
-            ? `A conta Google ${email} foi autenticada, mas ainda não foi autorizada. Peça a um professor já autorizado para cadastrá-la e a um admin para aprovar a solicitação.`
-            : `O e-mail ${email} ainda não está autorizado. Peça a um professor já autorizado para cadastrá-lo e a um admin para aprovar a solicitação.`;
+          state.authNotice = `O e-mail ${email} ainda não está autorizado. Peça a um professor já autorizado para cadastrá-lo e a um admin para aprovar a solicitação.`;
           await state.auth.signOut();
           return;
         }
@@ -2507,13 +2638,11 @@
         $("#appRoot").classList.remove("hidden");
         $("#userRoleLabel").textContent = roleLabel(state.profile.role);
         $("#userNameLabel").textContent = state.profile.name || email;
-        $("#adminPanel").classList.toggle("hidden", !isAdmin());
-        $("#professorRequestPanel").classList.toggle("hidden", isAdmin());
         $("#certificateQueueButton").classList.remove("hidden");
         $("#professorAccessButton").classList.remove("hidden");
         $("#certificateQueueLabel").textContent = isAdmin() ? "Aprovar Faixa" : "Pendente de aprovação";
         $("#professorAccessLabel").textContent = isAdmin() ? "Autorizar professor" : "Cadastrar professor";
-        $("#professorAccessButton").dataset.scrollTarget = isAdmin() ? "adminPanel" : "professorRequestPanel";
+        $("#professorAccessButton").dataset.pageTarget = isAdmin() ? "adminPage" : "professorRequestPage";
         setStatus("Sistema conectado. Certificados gerados serão registrados com código de autenticação.");
         await loadHistory();
         await loadPendingApprovals();
@@ -2575,29 +2704,6 @@
         }
       });
 
-      $("#createAccountBtn").addEventListener("click", async () => {
-        try {
-          if (!state.auth) return setAuthStatus("Firebase ainda está carregando. Aguarde alguns segundos e tente novamente.");
-          setAuthStatus("Criando conta...");
-          await state.auth.createUserWithEmailAndPassword($("#loginEmail").value.trim().toLowerCase(), $("#loginPassword").value);
-        } catch (error) {
-          console.error(error);
-          setAuthStatus("Não foi possível criar a conta. O e-mail precisa estar autorizado para acessar o sistema.");
-        }
-      });
-
-      $("#googleLoginBtn").addEventListener("click", async () => {
-        try {
-          if (!state.auth) return setAuthStatus("Firebase ainda está carregando. Aguarde alguns segundos e tente novamente.");
-          setAuthStatus("Abrindo login Google...");
-          const provider = new firebase.auth.GoogleAuthProvider();
-          await state.auth.signInWithPopup(provider);
-        } catch (error) {
-          console.error(error);
-          setAuthStatus("Falha no login Google.");
-        }
-      });
-
       $("#resetPasswordBtn").addEventListener("click", async () => {
         try {
           const email = $("#loginEmail").value.trim().toLowerCase();
@@ -2614,6 +2720,9 @@
 
       $("#logoutBtn").addEventListener("click", () => state.auth && state.auth.signOut());
       $("#submitProfessorRequestBtn").addEventListener("click", submitProfessorRequest);
+      $("#requestProfessorName").addEventListener("input", event => {
+        $("#requestProfessorEmail").value = institutionalEmail(event.target.value);
+      });
     }
 
     function init() {
@@ -2660,15 +2769,12 @@
           });
         }
 
-        $$('[data-preview]').forEach(btn => {
-          btn.addEventListener("click", () => $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" }));
+        $$('[data-page-target]').forEach(btn => {
+          btn.addEventListener("click", () => showWorkspacePage(btn.dataset.pageTarget));
         });
 
-        $$('[data-scroll-target]').forEach(btn => {
-          btn.addEventListener("click", () => {
-            const target = document.getElementById(btn.dataset.scrollTarget);
-            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-          });
+        $$('[data-last-pdf]').forEach(btn => {
+          btn.addEventListener("click", openLastPdf);
         });
 
         $$('[data-pdf]').forEach(btn => btn.addEventListener("click", handleOfficialAction));
@@ -2701,4 +2807,5 @@
   </script>
 </body>
 </html>
+
 
