@@ -1056,25 +1056,30 @@
 
     .auth-stamp {
       position: absolute;
-      right: 4.8%;
-      bottom: 3.6%;
+      right: 2.3%;
+      bottom: 1.35%;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: .62cqw;
+      gap: .24cqw;
+      padding: .38cqw .42cqw .32cqw;
+      border: .07cqw solid rgba(17,24,39,.10);
+      border-radius: .48cqw;
+      background: rgba(251,250,247,.96);
+      box-shadow: 0 .16cqw .5cqw rgba(17,24,39,.08);
       color: rgba(0,0,0,.55);
       font-family: "Exo2Regular", Arial, sans-serif;
-      font-size: .95cqw;
+      font-size: .52cqw;
       line-height: 1.05;
-      text-align: right;
+      text-align: center;
       z-index: 6;
     }
 
     .qr-code-box {
-      width: 4.7cqw;
-      height: 4.7cqw;
+      width: 4.25cqw;
+      height: 4.25cqw;
       display: grid;
       place-items: center;
-      opacity: .88;
     }
 
     .qr-code-box img,
@@ -1085,9 +1090,23 @@
     }
 
     .auth-code-preview {
-      max-width: 14cqw;
+      width: 4.25cqw;
       white-space: nowrap;
+      letter-spacing: .015em;
     }
+
+    .auth-code-preview span,
+    .auth-code-preview strong {
+      display: block;
+      font-weight: 700;
+    }
+
+    .auth-code-preview strong {
+      font-size: .49cqw;
+      letter-spacing: 0;
+    }
+
+    .certificate.has-auth-stamp .signatures.count-many { right: 10%; }
 
     .approval-watermark {
       position: absolute;
@@ -1477,8 +1496,8 @@
               <div class="date" id="datePreview">7 de Julho de 2023.</div>
               <div class="approval-watermark" id="approvalWatermark">Aguardando aprovação</div>
               <div class="auth-stamp hidden" id="authStamp">
-                <div class="auth-code-preview" id="authCodePreview"></div>
                 <div class="qr-code-box" id="qrCodeBox"></div>
+                <div class="auth-code-preview" id="authCodePreview"></div>
               </div>
 
               <div class="signatures count-1" id="signaturePreview"></div>
@@ -1818,7 +1837,14 @@
       const url = validationUrl(code);
       const holder = document.createElement("div");
       if (window.QRCode) {
-        new QRCode(holder, { text: url, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M });
+        new QRCode(holder, {
+          text: url,
+          width: 128,
+          height: 128,
+          colorDark: "#111111",
+          colorLight: "#fbfaf7",
+          correctLevel: QRCode.CorrectLevel.M
+        });
         const canvas = holder.querySelector("canvas");
         const img = holder.querySelector("img");
         const src = canvas ? canvas.toDataURL("image/png") : (img ? img.src : "");
@@ -1847,11 +1873,16 @@
 
       if (cert && cert.status === "approved" && cert.authCode) {
         stamp.classList.remove("hidden");
-        codeEl.innerHTML = `Código<br><strong>${escapeHtml(cert.authCode)}</strong>`;
+        if (certificate) certificate.classList.add("has-auth-stamp");
+        const codeParts = cert.authCode.split("-");
+        codeEl.innerHTML = `<span>${escapeHtml(codeParts.slice(0, 2).join("-"))}</span><strong>${escapeHtml(codeParts.slice(2).join("-"))}</strong>`;
+        codeEl.title = `Código de autenticação ${cert.authCode}`;
         renderQRCode(qrBox, cert.authCode);
       } else {
         stamp.classList.add("hidden");
+        if (certificate) certificate.classList.remove("has-auth-stamp");
         codeEl.textContent = "";
+        codeEl.removeAttribute("title");
         qrBox.innerHTML = "";
       }
     }
