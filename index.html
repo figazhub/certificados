@@ -1094,6 +1094,13 @@
     .workflow-item strong { color: #111827; }
     .workflow-item small { color: #6b7280; line-height: 1.35; }
 
+    .workflow-subheading {
+      margin: 10px 0 0;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
     .workflow-actions {
       display: flex;
       flex-wrap: wrap;
@@ -2444,7 +2451,30 @@
         }
         const snap = await query.limit(50).get();
         const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        list.innerHTML = docs.length ? docs.map(doc => certCard(doc, doc.id, isAdmin())).join("") : "Nenhuma faixa preta pendente.";
+        if (isAdmin()) {
+          list.innerHTML = docs.length ? docs.map(doc => certCard(doc, doc.id, true)).join("") : "Nenhuma faixa preta pendente.";
+          return;
+        }
+
+        // A regra permite ao professor consultar somente solicitações que ele enviou.
+        const requestSnap = await state.db.collection("professorRequests")
+          .where("requestedByEmail", "==", state.user.email)
+          .limit(50)
+          .get();
+        const requests = requestSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(request => request.status === "pending");
+        const certificateMarkup = docs.length
+          ? docs.map(doc => certCard(doc, doc.id, false)).join("")
+          : "Nenhuma faixa preta pendente.";
+        const requestMarkup = requests.length
+          ? requests.map(request => pendingProfessorRequestCard(request)).join("")
+          : "Nenhum cadastro de professor aguardando aprovação.";
+        list.innerHTML = `
+          <h3 class="workflow-subheading">Faixas pretas</h3>
+          ${certificateMarkup}
+          <h3 class="workflow-subheading">Cadastros de professor</h3>
+          ${requestMarkup}`;
       } catch (error) {
         console.error(error);
         list.textContent = "Não foi possível carregar aprovações pendentes.";
@@ -2461,6 +2491,14 @@
             <button class="mini-btn secondary" type="button" data-approve-professor="${escapeHtml(id)}" data-role="admin">Aprovar como admin</button>
             <button class="mini-btn secondary" type="button" data-reject-professor="${escapeHtml(id)}">Negar</button>
           </div>
+        </div>`;
+    }
+
+    function pendingProfessorRequestCard(request) {
+      return `
+        <div class="workflow-item">
+          <strong>${escapeHtml(request.name || "Professor sem nome")}</strong>
+          <small>${escapeHtml(request.email || "")} - ${escapeHtml(request.graduation || "Graduação não informada")} - ${escapeHtml(request.unit || "Extremo Norte")}<br>Status: aguardando autorização do admin.</small>
         </div>`;
     }
 
