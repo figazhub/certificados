@@ -1367,18 +1367,18 @@
 
         <div class="field">
           <label for="student">Nome do(a) atleta</label>
-          <input id="student" type="text" value="João Victor Freitas Figueiredo" autocomplete="off" />
+          <input id="student" type="text" placeholder="Nome completo do(a) atleta" autocomplete="off" />
         </div>
 
         <div class="field">
           <label for="belt">Faixa / Graduação</label>
           <select id="belt">
-            
+            <option value="" selected disabled>Selecione a faixa</option>
             <option value="cinza-branca">Faixa Cinza e Branca</option>
             <option value="cinza">Faixa Cinza</option>
             <option value="cinza-preta">Faixa Cinza e Preta</option>
             <option value="amarela-branca">Faixa Amarela e Branca</option>
-            <option value="amarela" selected>Faixa Amarela</option>
+            <option value="amarela">Faixa Amarela</option>
             <option value="amarela-preta">Faixa Amarela e Preta</option>
             <option value="laranja-branca">Faixa Laranja e Branca</option>
             <option value="laranja">Faixa Laranja</option>
@@ -1483,13 +1483,13 @@
 
               <div class="cert-title">Certificado</div>
               <div class="intro">A <strong>ASSOCIAÇÃO EXTREMO NORTE DE LUTAS</strong>, confere a</div>
-              <div class="student-name fit-text" id="studentPreview">JOÃO VICTOR FREITAS FIGUEIREDO</div>
+              <div class="student-name fit-text" id="studentPreview">INSERIR NOME</div>
               <div class="orange-rule"></div>
               <div class="subtitle">o título de</div>
 
               <div class="belt" id="beltBox">
                 <svg class="belt-svg" id="beltSvg" viewBox="0 0 1000 80" preserveAspectRatio="none" aria-hidden="true"></svg>
-                <div class="belt-name fit-text" id="beltPreview">FAIXA AMARELA</div>
+                <div class="belt-name fit-text" id="beltPreview">SELECIONE A FAIXA</div>
               </div>
 
               <div class="reason">por mérito e reconhecimento.</div>
@@ -1570,6 +1570,8 @@
       "preta-4-grau": { label: "FAIXA PRETA 4º GRAU", type: "single", main: "#050505", tarja: "#dc2626", text: "#ffffff", degree: 4 }
     };
 
+    const emptyBelt = { label: "SELECIONE A FAIXA", type: "single", main: "#e5e7eb", text: "#4b5563" };
+
     function escapeHtml(value) {
       return String(value || "")
         .replaceAll("&", "&amp;")
@@ -1616,7 +1618,7 @@
     }
 
     function currentBelt() {
-      return beltMap[$("#belt").value] || beltMap.amarela;
+      return beltMap[$("#belt").value] || emptyBelt;
     }
 
     function isBlackBeltKey(key) {
@@ -1667,7 +1669,7 @@
 
     function formPayload(status = "approved") {
       const beltKey = $("#belt").value;
-      const belt = beltMap[beltKey] || beltMap.amarela;
+      const belt = beltMap[beltKey] || emptyBelt;
       const profile = state.profile || {};
       return {
         student: $("#student").value.trim(),
@@ -1690,10 +1692,12 @@
     function validateCertificateForm() {
       syncProfessors();
       const student = $("#student").value.trim();
+      const beltKey = $("#belt").value;
       const date = $("#date").value;
       const professors = state.professors.map(p => String(p.name || "").trim()).filter(Boolean);
       if (!student) return "Informe o nome do(a) atleta.";
       if (student.length > 160) return "O nome do(a) atleta deve ter no máximo 160 caracteres.";
+      if (!beltMap[beltKey]) return "Selecione a faixa/graduação.";
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || formatDate(date) === "Data inválida.") return "Informe uma data de certificação válida.";
       if (!professors.length) return "Informe pelo menos um professor responsável.";
       if (professors.length > 5) return "Informe no máximo cinco professores responsáveis.";
@@ -1891,7 +1895,7 @@
     function updatePreview(root = document) {
       syncProfessors();
       updateMainLogo(root);
-      $("#studentPreview", root).textContent = upper($("#student").value, "NOME DO ATLETA");
+      $("#studentPreview", root).textContent = upper($("#student").value, "INSERIR NOME");
 
       const belt = currentBelt();
       if (belt.main) $("#beltBox", root).style.setProperty("--belt-main", belt.main);
