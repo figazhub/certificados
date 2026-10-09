@@ -140,22 +140,27 @@
       display: flex;
       align-items: stretch;
       height: 100%;
+      margin-left: auto;
+      overflow-x: auto;
+      scrollbar-width: none;
     }
+
+    .top-actions::-webkit-scrollbar { display: none; }
 
     .top-action {
       appearance: none;
       border: 0;
       background: transparent;
       color: #f3f4f6;
-      min-width: 178px;
-      padding: 0 30px;
+      min-width: 124px;
+      padding: 0 16px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 9px;
       font-family: "Exo2Regular", Arial, sans-serif;
       font-weight: 800;
-      font-size: 15px;
+      font-size: 13px;
       cursor: pointer;
       border-left: 1px solid rgba(255,255,255,.09);
     }
@@ -787,7 +792,7 @@
         margin-top: 4px;
       }
 
-      .top-actions .top-action:first-child {
+      .top-actions .top-action[data-preview] {
         display: none;
       }
 
@@ -1164,6 +1169,12 @@
       background: #fff;
     }
 
+    .request-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     @media print {
       @page { size: A4 landscape; margin: 0; }
 
@@ -1177,6 +1188,7 @@
         height: var(--paper-h);
         margin: 0;
         background: #fff !important;
+        overflow: hidden !important;
       }
 
       .topbar,
@@ -1268,6 +1280,18 @@
       </div>
 
       <div class="top-actions">
+        <button class="top-action" type="button" data-scroll-target="historyPanel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>
+          <span>Histórico</span>
+        </button>
+        <button class="top-action hidden" type="button" id="certificateQueueButton" data-scroll-target="pendingPanel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v18H7z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+          <span id="certificateQueueLabel">Pendentes</span>
+        </button>
+        <button class="top-action hidden" type="button" id="professorAccessButton" data-scroll-target="professorRequestPanel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c.8-4 2.8-6 6-6 1.2 0 2.2.3 3 .8M17 11v6M14 14h6"/></svg>
+          <span id="professorAccessLabel">Professores</span>
+        </button>
         <button class="top-action" type="button" data-preview>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
           <span>Pré-visualizar</span>
@@ -1377,11 +1401,6 @@
           <button class="add-prof" type="button" id="addProfessor">+ Adicionar professor / assinatura</button>
         </div>
 
-        <div class="field">
-          <label for="notes">Observações (opcional)</label>
-          <textarea id="notes" placeholder="Adicione observações ou informações complementares, se necessário."></textarea>
-        </div>
-
         <div class="actions">
           <button class="btn btn-light" type="button" data-preview>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1407,26 +1426,24 @@
           </div>
 
           <div class="workflow-box hidden" id="pendingPanel">
-            <h2>Aprovações pendentes - Faixa Preta</h2>
+            <h2 id="pendingTitle">Certificados pendentes de aprovação</h2>
             <div class="workflow-list" id="pendingList">Nenhuma solicitação carregada.</div>
           </div>
 
-          <div class="workflow-box hidden" id="adminPanel">
-            <h2>Cadastrar / autorizar professor</h2>
+          <div class="workflow-box hidden" id="professorRequestPanel">
+            <h2>Cadastrar professor</h2>
             <div class="admin-form">
-              <input id="adminUserEmail" type="email" placeholder="E-mail autorizado" />
-              <input id="adminUserName" type="text" placeholder="Nome do professor" />
-              <input id="adminUserUnit" type="text" placeholder="Unidade / polo" />
-              <div class="grid-2">
-                <select id="adminUserRole">
-                  <option value="professor">Professor</option>
-                  <option value="lider">Líder</option>
-                  <option value="admin">Admin</option>
-                </select>
-                <button class="mini-btn" type="button" id="saveUserProfileBtn">Salvar acesso</button>
-              </div>
-              <div class="firebase-status" id="adminStatus"></div>
+              <input id="requestProfessorEmail" type="email" placeholder="E-mail do novo professor" />
+              <input id="requestProfessorName" type="text" placeholder="Nome do professor" />
+              <input id="requestProfessorUnit" type="text" placeholder="Unidade / polo" />
+              <button class="mini-btn" type="button" id="submitProfessorRequestBtn">Enviar cadastro para aprovação</button>
+              <div class="firebase-status" id="professorRequestStatus"></div>
             </div>
+          </div>
+
+          <div class="workflow-box hidden" id="adminPanel">
+            <h2>Autorizar professor</h2>
+            <div class="workflow-list" id="professorRequestList">Nenhuma solicitação carregada.</div>
           </div>
         </div>
       </section>
@@ -1566,11 +1583,11 @@
     }
 
     function roleLabel(role) {
-      return ({ professor: "Professor", lider: "Líder", admin: "Admin" })[role] || "Usuário";
+      return ({ professor: "Professor", admin: "Admin" })[role] || "Usuário sem permissão";
     }
 
     function canApprove() {
-      return state.profile && ["lider", "admin"].includes(state.profile.role);
+      return isAdmin();
     }
 
     function isAdmin() {
@@ -1623,8 +1640,7 @@
         beltKey: $("#belt").value,
         mainLogo: $("#mainLogo").value,
         date: $("#date").value,
-        professors: state.professors,
-        notes: $("#notes").value.trim()
+        professors: state.professors
       });
     }
 
@@ -1640,7 +1656,6 @@
         mainLogo: $("#mainLogo").value,
         date: $("#date").value,
         professors: state.professors.map(p => ({ name: String(p.name || "").trim(), role: String(p.role || "").trim() })).filter(p => p.name),
-        notes: $("#notes").value.trim(),
         unit: profile.unit || (window.extremoConfig && window.extremoConfig.unidadePadrao) || "Extremo Norte",
         issuerEmail: state.user ? state.user.email : "",
         issuerName: profile.name || (state.user ? state.user.displayName || state.user.email : ""),
@@ -1661,7 +1676,6 @@
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || formatDate(date) === "Data inválida.") return "Informe uma data de certificação válida.";
       if (!professors.length) return "Informe pelo menos um professor responsável.";
       if (professors.length > 5) return "Informe no máximo cinco professores responsáveis.";
-      if ($("#notes").value.length > 2000) return "As observações devem ter no máximo 2.000 caracteres.";
       return "";
     }
 
@@ -1909,16 +1923,17 @@
     function makeExportClone() {
       const host = document.createElement("div");
       host.style.position = "fixed";
-      host.style.left = "-10000px";
+      host.style.left = "0";
       host.style.top = "0";
-      host.style.width = "1122px";
+      host.style.width = "1123px";
       host.style.height = "794px";
       host.style.background = "#fff";
-      host.style.zIndex = "-1";
+      host.style.pointerEvents = "none";
+      host.style.zIndex = "-2147483647";
 
       const clone = $("#certificate").cloneNode(true);
       clone.id = "certificate-export";
-      clone.style.width = "1122px";
+      clone.style.width = "1123px";
       clone.style.height = "794px";
       clone.style.minWidth = "0";
       clone.style.borderRadius = "0";
@@ -1947,7 +1962,7 @@
       }
 
       updateAuthStamp();
-      if (!window.html2pdf) {
+      if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
         status.textContent = "Gerador automático indisponível. Abrindo a janela de impressão para salvar em PDF.";
         printCertificateNow();
         return;
@@ -1960,28 +1975,21 @@
         fitAll(host);
         await new Promise(resolve => setTimeout(resolve, 220));
 
-        await html2pdf()
-          .set({
-            margin: 0,
-            filename: `certificado-${slug($("#student").value)}-${state.activeCertificate.authCode}.pdf`,
-            image: { type: "jpeg", quality: 1 },
-            html2canvas: {
-              scale: 3,
-              useCORS: true,
-              allowTaint: false,
-              backgroundColor: "#ffffff",
-              scrollX: 0,
-              scrollY: 0,
-              width: 1122,
-              height: 794,
-              windowWidth: 1122,
-              windowHeight: 794
-            },
-            jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-            pagebreak: { mode: ["avoid-all"] }
-          })
-          .from(clone)
-          .save();
+        const canvas = await window.html2canvas(clone, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#ffffff",
+          scrollX: 0,
+          scrollY: 0,
+          width: 1123,
+          height: 794,
+          windowWidth: 1123,
+          windowHeight: 794
+        });
+        const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "landscape", compress: true });
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 297, 210, undefined, "FAST");
+        pdf.save(`certificado-${slug($("#student").value)}-${state.activeCertificate.authCode}.pdf`);
 
         status.textContent = `PDF gerado com autenticação ${state.activeCertificate.authCode}.`;
       } catch (error) {
@@ -2057,7 +2065,7 @@
       const ref = await state.db.collection("certificates").add(data);
       state.activeCertificate = { id: ref.id, ...data, createdAt: new Date() };
       updateAuthStamp();
-      setStatus("Solicitação de faixa preta enviada para aprovação do líder. O PDF oficial será liberado após aprovação.");
+      setStatus("Solicitação de faixa preta enviada para aprovação do admin. O PDF oficial será liberado após aprovação.");
       await loadHistory();
       if (canApprove()) await loadPendingApprovals();
     }
@@ -2091,7 +2099,7 @@
     }
 
     async function rejectCertificate(id) {
-      const reason = prompt("Motivo da recusa/correção:") || "Solicitação recusada pelo líder.";
+      const reason = prompt("Motivo da recusa/correção:") || "Solicitação recusada pelo admin.";
       await state.db.collection("certificates").doc(id).update({
         status: "rejected",
         rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2139,7 +2147,7 @@
         }
 
         if (requiresApproval && canApprove()) {
-          const confirmed = confirm("Faixa preta exige aprovação. Como seu perfil é líder/admin, deseja aprovar e gerar agora?");
+          const confirmed = confirm("Faixa preta exige aprovação. Como seu perfil é admin, deseja aprovar e gerar agora?");
           if (!confirmed) {
             await submitForApproval();
             return;
@@ -2180,12 +2188,11 @@
       $("#student").value = cert.student || "";
       $("#belt").value = cert.beltKey || "amarela";
       $("#date").value = cert.date || "";
-      $("#notes").value = cert.notes || "";
       state.professors = Array.isArray(cert.professors) && cert.professors.length ? cert.professors : [{ name: "", role: "" }];
       $("#mainLogo").value = cert.mainLogo || "logo1";
       renderProfessorFields();
       state.activeCertificate = cert;
-      if (!cert.mainLogo) state.activeCertificate.snapshot = formSnapshot();
+      state.activeCertificate.snapshot = formSnapshot();
       updatePreview();
       $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -2246,42 +2253,118 @@
     async function loadPendingApprovals() {
       const panel = $("#pendingPanel");
       const list = $("#pendingList");
-      if (!canApprove()) {
+      if (!state.user || !state.profile) {
         panel.classList.add("hidden");
         return;
       }
       panel.classList.remove("hidden");
       list.textContent = "Carregando aprovações...";
       try {
-        const snap = await state.db.collection("certificates").where("status", "==", "pending").limit(50).get();
-        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        list.innerHTML = docs.length ? docs.map(doc => certCard(doc, doc.id, true)).join("") : "Nenhuma faixa preta pendente.";
+        let query = state.db.collection("certificates");
+        if (isAdmin()) {
+          $("#pendingTitle").textContent = "Aprovar Faixa";
+          query = query.where("status", "==", "pending");
+        } else {
+          $("#pendingTitle").textContent = "Pendente de aprovação";
+          query = query.where("issuerEmail", "==", state.user.email);
+        }
+        const snap = await query.limit(50).get();
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(doc => doc.status === "pending");
+        list.innerHTML = docs.length ? docs.map(doc => certCard(doc, doc.id, isAdmin())).join("") : "Nenhuma faixa preta pendente.";
       } catch (error) {
         console.error(error);
         list.textContent = "Não foi possível carregar aprovações pendentes.";
       }
     }
 
-    async function saveUserProfile() {
-      if (!isAdmin()) {
-        $("#adminStatus").textContent = "Apenas admin pode autorizar usuários.";
+    function professorRequestCard(request, id) {
+      return `
+        <div class="workflow-item" data-request-id="${escapeHtml(id)}">
+          <strong>${escapeHtml(request.name || "Professor sem nome")}</strong>
+          <small>${escapeHtml(request.email || "")} - ${escapeHtml(request.unit || "Extremo Norte")}<br>Solicitado por ${escapeHtml(request.requestedByName || request.requestedByEmail || "")}</small>
+          <div class="request-actions">
+            <button class="mini-btn" type="button" data-approve-professor="${escapeHtml(id)}" data-role="professor">Aprovar como professor</button>
+            <button class="mini-btn secondary" type="button" data-approve-professor="${escapeHtml(id)}" data-role="admin">Aprovar como admin</button>
+            <button class="mini-btn secondary" type="button" data-reject-professor="${escapeHtml(id)}">Negar</button>
+          </div>
+        </div>`;
+    }
+
+    async function submitProfessorRequest() {
+      if (!state.user || !state.profile) return;
+      const status = $("#professorRequestStatus");
+      const email = $("#requestProfessorEmail").value.trim().toLowerCase();
+      const name = $("#requestProfessorName").value.trim();
+      const unit = $("#requestProfessorUnit").value.trim() || state.profile.unit || "Extremo Norte";
+      if (!/^\S+@\S+\.\S+$/.test(email) || !name) {
+        status.textContent = "Informe nome e e-mail válidos.";
         return;
       }
-      const email = $("#adminUserEmail").value.trim().toLowerCase();
-      const name = $("#adminUserName").value.trim();
-      const unit = $("#adminUserUnit").value.trim() || "Extremo Norte";
-      const role = $("#adminUserRole").value;
-      if (!email || !name) {
-        $("#adminStatus").textContent = "Informe e-mail e nome.";
-        return;
-      }
+      status.textContent = "Enviando cadastro...";
       try {
-        await state.db.collection("usersByEmail").doc(email).set({ email, name, unit, role, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-        $("#adminStatus").textContent = "Usuário autorizado/atualizado.";
+        await state.db.collection("professorRequests").add({
+          email, name, unit, status: "pending",
+          requestedByEmail: state.user.email,
+          requestedByName: state.profile.name || state.user.email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        status.textContent = "Cadastro enviado ao admin para definição do perfil e autorização.";
+        $("#requestProfessorEmail").value = "";
+        $("#requestProfessorName").value = "";
       } catch (error) {
         console.error(error);
-        $("#adminStatus").textContent = "Não foi possível salvar o acesso. Confira as permissões e tente novamente.";
+        status.textContent = "Não foi possível enviar o cadastro.";
       }
+    }
+
+    async function loadProfessorRequests() {
+      const list = $("#professorRequestList");
+      if (!isAdmin()) return;
+      list.textContent = "Carregando solicitações...";
+      try {
+        const snap = await state.db.collection("professorRequests").where("status", "==", "pending").limit(50).get();
+        const requests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        list.innerHTML = requests.length ? requests.map(request => professorRequestCard(request, request.id)).join("") : "Nenhum professor aguardando autorização.";
+      } catch (error) {
+        console.error(error);
+        list.textContent = "Não foi possível carregar as solicitações de professores.";
+      }
+    }
+
+    async function approveProfessorRequest(id, role) {
+      if (!isAdmin() || !["professor", "admin"].includes(role)) return;
+      const requestRef = state.db.collection("professorRequests").doc(id);
+      const snap = await requestRef.get();
+      if (!snap.exists || snap.data().status !== "pending") return;
+      const request = snap.data();
+      const profileRef = state.db.collection("usersByEmail").doc(String(request.email).toLowerCase());
+      const batch = state.db.batch();
+      batch.set(profileRef, {
+        email: String(request.email).toLowerCase(), name: request.name, unit: request.unit, role,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      batch.update(requestRef, {
+        status: "approved", approvedRole: role,
+        reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        reviewedByEmail: state.user.email,
+        reviewedByName: state.profile.name || state.user.email
+      });
+      await batch.commit();
+      setStatus(`${request.name} autorizado como ${roleLabel(role)}.`);
+      await loadProfessorRequests();
+    }
+
+    async function rejectProfessorRequest(id) {
+      if (!isAdmin()) return;
+      const reason = prompt("Motivo da negativa:") || "Cadastro negado pelo admin.";
+      await state.db.collection("professorRequests").doc(id).update({
+        status: "rejected", rejectedReason: reason,
+        reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        reviewedByEmail: state.user.email,
+        reviewedByName: state.profile.name || state.user.email
+      });
+      setStatus("Solicitação de professor negada.");
+      await loadProfessorRequests();
     }
 
     function wireWorkflowActions() {
@@ -2290,6 +2373,8 @@
         const gen = e.target.closest("[data-generate-cert]");
         const approve = e.target.closest("[data-approve-cert]");
         const reject = e.target.closest("[data-reject-cert]");
+        const approveProfessor = e.target.closest("[data-approve-professor]");
+        const rejectProfessor = e.target.closest("[data-reject-professor]");
         try {
           if (load) {
             const cert = await fetchCertificate(load.dataset.loadCert);
@@ -2304,6 +2389,8 @@
           }
           if (approve) await approveCertificate(approve.dataset.approveCert);
           if (reject) await rejectCertificate(reject.dataset.rejectCert);
+          if (approveProfessor) await approveProfessorRequest(approveProfessor.dataset.approveProfessor, approveProfessor.dataset.role);
+          if (rejectProfessor) await rejectProfessorRequest(rejectProfessor.dataset.rejectProfessor);
         } catch (error) {
           console.error(error);
           setStatus("Falha na operação. Confira console, login e regras do Firestore.");
@@ -2360,14 +2447,28 @@
           return;
         }
         state.profile = snap.data();
+        if (!["professor", "admin"].includes(state.profile.role)) {
+          state.profile = null;
+          $("#appRoot").classList.add("hidden");
+          $("#authScreen").classList.remove("hidden");
+          setAuthStatus("Este perfil não possui um papel permitido. O acesso é exclusivo para professores e admins.");
+          return;
+        }
         $("#authScreen").classList.add("hidden");
         $("#appRoot").classList.remove("hidden");
         $("#userRoleLabel").textContent = roleLabel(state.profile.role);
         $("#userNameLabel").textContent = state.profile.name || email;
         $("#adminPanel").classList.toggle("hidden", !isAdmin());
+        $("#professorRequestPanel").classList.toggle("hidden", isAdmin());
+        $("#certificateQueueButton").classList.remove("hidden");
+        $("#professorAccessButton").classList.remove("hidden");
+        $("#certificateQueueLabel").textContent = isAdmin() ? "Aprovar Faixa" : "Pendente de aprovação";
+        $("#professorAccessLabel").textContent = isAdmin() ? "Autorizar professor" : "Cadastrar professor";
+        $("#professorAccessButton").dataset.scrollTarget = isAdmin() ? "adminPanel" : "professorRequestPanel";
         setStatus("Sistema conectado. Certificados gerados serão registrados com código de autenticação.");
         await loadHistory();
         await loadPendingApprovals();
+        if (isAdmin()) await loadProfessorRequests();
         updatePdfButtonText();
       } catch (error) {
         console.error(error);
@@ -2463,7 +2564,7 @@
       });
 
       $("#logoutBtn").addEventListener("click", () => state.auth && state.auth.signOut());
-      $("#saveUserProfileBtn").addEventListener("click", saveUserProfile);
+      $("#submitProfessorRequestBtn").addEventListener("click", submitProfessorRequest);
     }
 
     function init() {
@@ -2476,7 +2577,7 @@
         updatePreview();
         wireWorkflowActions();
 
-        ["student", "belt", "date", "mainLogo", "notes"].forEach(id => {
+        ["student", "belt", "date", "mainLogo"].forEach(id => {
           const el = $("#" + id);
           if (!el) return;
           el.addEventListener("input", () => updatePreview());
@@ -2512,6 +2613,13 @@
 
         $$('[data-preview]').forEach(btn => {
           btn.addEventListener("click", () => $("#previewArea").scrollIntoView({ behavior: "smooth", block: "start" }));
+        });
+
+        $$('[data-scroll-target]').forEach(btn => {
+          btn.addEventListener("click", () => {
+            const target = document.getElementById(btn.dataset.scrollTarget);
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
         });
 
         $$('[data-pdf]').forEach(btn => btn.addEventListener("click", handleOfficialAction));
