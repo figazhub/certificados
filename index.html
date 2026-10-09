@@ -2272,10 +2272,12 @@
           query = query.where("status", "==", "pending");
         } else {
           $("#pendingTitle").textContent = "Pendente de aprovação";
-          query = query.where("issuerEmail", "==", state.user.email);
+          query = query
+            .where("issuerEmail", "==", state.user.email)
+            .where("status", "==", "pending");
         }
         const snap = await query.limit(50).get();
-        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(doc => doc.status === "pending");
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         list.innerHTML = docs.length ? docs.map(doc => certCard(doc, doc.id, isAdmin())).join("") : "Nenhuma faixa preta pendente.";
       } catch (error) {
         console.error(error);
