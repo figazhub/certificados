@@ -266,7 +266,9 @@ service cloud.firestore {
     }
 
     match /usersByEmail/{email} {
-      allow get: if authorized() && (email == userEmail() || isAdmin());
+      // Permite que uma conta recém-autenticada consulte apenas o próprio e-mail.
+      // Assim o frontend diferencia corretamente perfil inexistente de uma falha de regra.
+      allow get: if signedIn() && (email == userEmail() || isAdmin());
       allow list: if isAdmin();
       allow create, update: if isAdmin() && validUserProfile(email, request.resource.data);
       allow delete: if isAdmin();
