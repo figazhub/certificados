@@ -1469,7 +1469,7 @@
 
         <div class="field">
           <label for="date">Data da certificação</label>
-          <input id="date" type="date" value="2023-07-07" />
+          <input id="date" type="date" />
         </div>
 
         <div class="professor-section">
@@ -1529,7 +1529,7 @@
               </div>
 
               <div class="reason">por mérito e reconhecimento.</div>
-              <div class="date" id="datePreview">7 de Julho de 2023.</div>
+              <div class="date" id="datePreview">Data da certificação.</div>
               <div class="approval-watermark" id="approvalWatermark">Aguardando aprovação</div>
               <div class="auth-stamp hidden" id="authStamp">
                 <div class="qr-code-box" id="qrCodeBox"></div>
@@ -1593,7 +1593,7 @@
 
     const state = {
       professors: [
-        { name: "Julyandre Paes de Souza", role: "Faixa Preta 2º Grau - CBJJ" }
+        { name: "", role: "" }
       ],
       firebaseReady: false,
       auth: null,
