@@ -1,0 +1,60 @@
+name: Inspect Test Certificate Data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-test-data.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install Firebase Admin
+        run: npm install --no-save firebase-admin@latest
+      - name: Inspect certificate data
+        run: |
+          node <<'NODE'
+          const { initializeApp } = require('firebase-admin/app');
+          const { getFirestore } = require('firebase-admin/firestore');
+
+          initializeApp({ projectId: 'cert-generator-3b9bb' });
+          const db = getFirestore();
+
+          (async () => {
+            for (const collectionName of ['certificates', 'publicCertificates', 'rejectedStudentLocks']) {
+              const snap = await db.collection(collectionName).get();
+              console.log('COLLECTION=' + collectionName + ' COUNT=' + snap.size);
+              snap.docs.forEach(doc => {
+                const d = doc.data();
+                console.log(JSON.stringify({
+                  collection: collectionName,
+                  id: doc.id,
+                  student: d.student || null,
+                  studentUpper: d.studentUpper || null,
+                  beltLabel: d.beltLabel || null,
+                  date: d.date || null,
+                  status: d.status || null,
+                  issuerEmail: d.issuerEmail || null,
+                  authCode: d.authCode || null,
+                  certificateId: d.certificateId || null
+                }));
+              });
+            }
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          NODE
