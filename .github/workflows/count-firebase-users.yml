@@ -27,28 +27,50 @@ jobs:
       - name: Count ready logins
         run: |
           node <<'NODE'
-          const admin = require('firebase-admin');
-          admin.initializeApp({ projectId: 'cert-generator-3b9bb' });
+          const { initializeApp } = require('firebase-admin/app');
+          const { getAuth } = require('firebase-admin/auth');
+          const { getFirestore } = require('firebase-admin/firestore');
+
+          initializeApp({ projectId: 'cert-generator-3b9bb' });
 
           (async () => {
+            const auth = getAuth();
+            const db = getFirestore();
+
             let authUsers = [];
             let pageToken;
             do {
-              const page = await admin.auth().listUsers(1000, pageToken);
+              const page = await auth.listUsers(1000, pageToken);
               authUsers.push(...page.users);
               pageToken = page.pageToken;
             } while (pageToken);
 
-            const profilesSnap = await admin.firestore().collection('usersByEmail').get();
-            const profiles = profilesSnap.docs.map(d => ({ id: d.id.toLowerCase(), data: d.data() }));
-            const authEmails = new Set(authUsers.map(u => String(u.email || '').toLowerCase()).filter(Boolean));
+            const profilesSnap = await db.collection('usersByEmail').get();
+            const profiles = profilesSnap.docs.map(d => ({
+              id: d.id.toLowerCase(),
+              role: d.data().role || null
+            }));
+
+            const authEmails = new Set(
+              authUsers.map(u => String(u.email || '').toLowerCase()).filter(Boolean)
+            );
+
             const ready = profiles.filter(p => authEmails.has(p.id));
             const authorizedOnly = profiles.filter(p => !authEmails.has(p.id));
-            const authOnly = authUsers.filter(u => u.email && !profiles.some(p => p.id === String(u.email).toLowerCase()));
+            const authOnly = authUsers.filter(u =>
+              u.email && !profiles.some(p => p.id === String(u.email).toLowerCase())
+            );
+
+            const readyByRole = ready.reduce((acc, p) => {
+              const role = p.role || 'sem_role';
+              acc[role] = (acc[role] || 0) + 1;
+              return acc;
+            }, {});
 
             console.log('AUTH_USERS=' + authUsers.length);
             console.log('AUTHORIZED_PROFILES=' + profiles.length);
             console.log('READY_LOGINS=' + ready.length);
+            console.log('READY_BY_ROLE=' + JSON.stringify(readyByRole));
             console.log('AUTHORIZED_WITHOUT_AUTH=' + authorizedOnly.length);
             console.log('AUTH_WITHOUT_PROFILE=' + authOnly.length);
           })().catch(err => {
