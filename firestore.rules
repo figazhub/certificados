@@ -13,8 +13,13 @@ service cloud.firestore {
       return /databases/$(database)/documents/usersByEmail/$(userEmail());
     }
 
+    function accountReady() {
+      return (!('status' in get(userDoc()).data) || get(userDoc()).data.status != 'disabled')
+        && (!('mustChangePassword' in get(userDoc()).data) || get(userDoc()).data.mustChangePassword != true);
+    }
+
     function authorized() {
-      return signedIn() && exists(userDoc()) && validRole(get(userDoc()).data.role);
+      return signedIn() && exists(userDoc()) && validRole(get(userDoc()).data.role) && accountReady();
     }
 
     function profile() {
@@ -36,7 +41,11 @@ service cloud.firestore {
 
     function validUserProfile(email, data) {
       return data.keys().hasAll(['email', 'name', 'unit', 'role', 'updatedAt'])
-        && data.keys().hasOnly(['email', 'name', 'graduation', 'unit', 'role', 'updatedAt'])
+        && data.keys().hasOnly([
+          'email', 'uid', 'name', 'graduation', 'unit', 'role', 'status',
+          'mustChangePassword', 'createdAt', 'createdByEmail',
+          'passwordChangedAt', 'updatedAt'
+        ])
         && data.email == email
         && data.email is string
         && data.name is string
@@ -47,6 +56,8 @@ service cloud.firestore {
         && data.unit.size() > 0
         && data.unit.size() <= 160
         && validRole(data.role)
+        && (!('status' in data) || data.status == 'active' || data.status == 'disabled')
+        && (!('mustChangePassword' in data) || data.mustChangePassword is bool)
         && data.updatedAt == request.time;
     }
 
