@@ -13,6 +13,7 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-functions-compat.js"></script>
   <script defer src="./assets/js/firebase-config.js"></script>
 
   <style>
@@ -1332,14 +1333,35 @@
           <label for="loginPassword">Senha</label>
           <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Senha" />
         </div>
-        <div class="auth-buttons">
+        <div class="auth-buttons" style="grid-template-columns:1fr">
           <button class="btn btn-orange" type="button" id="emailLoginBtn">Entrar</button>
-          <button class="btn btn-light" type="button" id="resetPasswordBtn">Recuperar senha</button>
         </div>
         <div class="auth-status" id="authStatus"></div>
       </div>
     </div>
   </section>
+  <section class="auth-screen hidden" id="firstAccessScreen">
+    <div class="auth-card">
+      <img class="auth-logo" src="./assets/logos/extremo-brazilian-jiu-jitsu.png" alt="Extremo Brazilian Jiu-Jitsu" />
+      <h1>Primeiro acesso</h1>
+      <p>Esta conta está usando uma senha provisória. Crie sua senha definitiva para liberar o sistema.</p>
+      <div class="auth-grid">
+        <div>
+          <label for="newPassword">Nova senha</label>
+          <input id="newPassword" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" />
+        </div>
+        <div>
+          <label for="confirmNewPassword">Confirmar nova senha</label>
+          <input id="confirmNewPassword" type="password" autocomplete="new-password" placeholder="Repita a nova senha" />
+        </div>
+        <div class="auth-buttons" style="grid-template-columns:1fr">
+          <button class="btn btn-orange" type="button" id="completeFirstAccessBtn">Definir nova senha</button>
+        </div>
+        <div class="auth-status" id="firstAccessStatus"></div>
+      </div>
+    </div>
+  </section>
+
 
   <section class="validation-screen hidden" id="validationScreen">
     <div class="validation-card">
@@ -1573,8 +1595,22 @@
         </section>
 
         <section class="workspace-page" id="adminPage">
-          <div class="workflow-box" id="adminPanel">
-            <h2>Autorizar professor</h2>
+          <div class="workflow-box" id="accountAdminPanel">
+            <h2>Gerenciar acessos</h2>
+            <p class="firebase-status">Crie contas com senha provisória. O professor será obrigado a definir uma nova senha no primeiro acesso.</p>
+            <div class="admin-form">
+              <input id="managedProfessorName" type="text" placeholder="Nome completo" />
+              <input id="managedProfessorEmail" type="email" placeholder="E-mail do professor" />
+              <input id="managedProfessorGraduation" type="text" placeholder="Graduação" />
+              <input id="managedProfessorUnit" type="text" placeholder="Unidade / polo" />
+              <button class="mini-btn" type="button" id="createManagedAccountBtn">Criar acesso com senha provisória</button>
+              <div class="firebase-status" id="managedAccountStatus"></div>
+            </div>
+            <div class="workflow-list" id="managedAccountsList" style="margin-top:16px">Carregando acessos...</div>
+          </div>
+
+          <div class="workflow-box" id="adminPanel" style="margin-top:16px">
+            <h2>Solicitações antigas de professor</h2>
             <div class="workflow-list" id="professorRequestList">Nenhuma solicitação carregada.</div>
           </div>
         </section>
@@ -1598,6 +1634,7 @@
       firebaseReady: false,
       auth: null,
       db: null,
+      functions: null,
       user: null,
       profile: null,
       authNotice: "",
@@ -1840,7 +1877,10 @@
       $$(".workspace-page").forEach(item => item.classList.toggle("active", item === page));
       if (pageId === "historyPage") loadHistory();
       if (pageId === "pendingPage") loadPendingApprovals();
-      if (pageId === "adminPage") loadProfessorRequests();
+      if (pageId === "adminPage") {
+        loadProfessorRequests();
+        loadManagedAccounts();
+      }
       page.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -2637,6 +2677,127 @@
       await loadProfessorRequests();
     }
 
+
+    function callable(name) {
+      if (!state.functions) throw new Error("Firebase Functions ainda não carregou.");
+      return state.functions.httpsCallable(name);
+    }
+
+    async function completeFirstAccess() {
+      const status = $("#firstAccessStatus");
+      const password = $("#newPassword").value;
+      const confirmPassword = $("#confirmNewPassword").value;
+      if (password !== confirmPassword) {
+        status.textContent = "As senhas não conferem.";
+        return;
+      }
+      if (password.length < 8 || !/[A-Za-zÀ-ÿ]/.test(password) || !/[0-9]/.test(password)) {
+        status.textContent = "Use pelo menos 8 caracteres, incluindo uma letra e um número.";
+        return;
+      }
+      status.textContent = "Salvando nova senha...";
+      try {
+        await callable("completeFirstAccess")({ newPassword: password });
+        $("#newPassword").value = "";
+        $("#confirmNewPassword").value = "";
+        await state.auth.signOut();
+        $("#firstAccessScreen").classList.add("hidden");
+        $("#authScreen").classList.remove("hidden");
+        setAuthStatus("Senha definida com sucesso. Entre novamente.");
+      } catch (error) {
+        console.error(error);
+        status.textContent = (error && error.message) || "Não foi possível concluir o primeiro acesso.";
+      }
+    }
+
+    function managedAccountCard(profile) {
+      const email = String(profile.email || "").toLowerCase();
+      const disabled = profile.status === "disabled";
+      const pendingPassword = profile.mustChangePassword === true;
+      const statusLabel = disabled ? "Bloqueado" : pendingPassword ? "Troca de senha obrigatória" : "Ativo";
+      const isProtectedAdmin = profile.role === "admin";
+      return `
+        <div class="workflow-item">
+          <strong>${escapeHtml(profile.name || email)}</strong>
+          <small>${escapeHtml(email)} · ${escapeHtml(profile.graduation || "Graduação não informada")} · ${escapeHtml(profile.unit || "Extremo Norte")}<br>Status: ${escapeHtml(statusLabel)} · Perfil: ${escapeHtml(roleLabel(profile.role))}</small>
+          <div class="request-actions">
+            ${isProtectedAdmin ? "" : `
+              <button class="mini-btn" type="button" data-reset-managed="${escapeHtml(email)}">Gerar nova senha provisória</button>
+              <button class="mini-btn secondary" type="button" data-toggle-managed="${escapeHtml(email)}" data-disabled="${disabled ? "false" : "true"}">${disabled ? "Desbloquear" : "Bloquear"}</button>
+            `}
+          </div>
+        </div>`;
+    }
+
+    async function loadManagedAccounts() {
+      const list = $("#managedAccountsList");
+      if (!list || !isAdmin()) return;
+      list.textContent = "Carregando acessos...";
+      try {
+        const snap = await state.db.collection("usersByEmail").limit(100).get();
+        const profiles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((a,b) => String(a.name || a.email || "").localeCompare(String(b.name || b.email || ""), "pt-BR"));
+        list.innerHTML = profiles.length ? profiles.map(managedAccountCard).join("") : "Nenhum acesso cadastrado.";
+      } catch (error) {
+        console.error(error);
+        list.textContent = "Não foi possível carregar os acessos.";
+      }
+    }
+
+    async function createManagedAccount() {
+      if (!isAdmin()) return;
+      const status = $("#managedAccountStatus");
+      const name = $("#managedProfessorName").value.trim();
+      const email = $("#managedProfessorEmail").value.trim().toLowerCase();
+      const graduation = $("#managedProfessorGraduation").value.trim();
+      const unit = $("#managedProfessorUnit").value.trim() || state.profile.unit || "Extremo Norte";
+      if (!name || !email || !graduation) {
+        status.textContent = "Informe nome, e-mail e graduação.";
+        return;
+      }
+      status.textContent = "Criando conta...";
+      try {
+        const result = await callable("createProfessorAccount")({ name, email, graduation, unit, role: "professor" });
+        const data = result.data || {};
+        status.innerHTML = `Conta criada para <strong>${escapeHtml(email)}</strong>.<br>Senha provisória: <strong>${escapeHtml(data.temporaryPassword || "")}</strong><br>Copie essa senha agora. Ela não ficará armazenada no sistema.`;
+        $("#managedProfessorName").value = "";
+        $("#managedProfessorEmail").value = "";
+        $("#managedProfessorGraduation").value = "";
+        $("#managedProfessorUnit").value = "";
+        await loadManagedAccounts();
+      } catch (error) {
+        console.error(error);
+        status.textContent = (error && error.message) || "Não foi possível criar a conta.";
+      }
+    }
+
+    async function resetManagedPassword(email) {
+      if (!isAdmin()) return;
+      const confirmed = confirm(`Gerar uma nova senha provisória para ${email}? A senha atual deixará de funcionar.`);
+      if (!confirmed) return;
+      try {
+        const result = await callable("resetProfessorPassword")({ email });
+        const password = result.data && result.data.temporaryPassword;
+        alert(`Nova senha provisória para ${email}:\n\n${password}\n\nCopie agora. O professor será obrigado a trocá-la no próximo acesso.`);
+        await loadManagedAccounts();
+      } catch (error) {
+        console.error(error);
+        alert((error && error.message) || "Não foi possível redefinir a senha.");
+      }
+    }
+
+    async function toggleManagedAccount(email, disabled) {
+      if (!isAdmin()) return;
+      try {
+        await callable("setProfessorDisabled")({ email, disabled });
+        setStatus(disabled ? "Acesso bloqueado." : "Acesso desbloqueado.");
+        await loadManagedAccounts();
+      } catch (error) {
+        console.error(error);
+        alert((error && error.message) || "Não foi possível alterar o acesso.");
+      }
+    }
+
     function wireWorkflowActions() {
       document.addEventListener("click", async e => {
         const load = e.target.closest("[data-load-cert]");
@@ -2645,6 +2806,8 @@
         const reject = e.target.closest("[data-reject-cert]");
         const approveProfessor = e.target.closest("[data-approve-professor]");
         const rejectProfessor = e.target.closest("[data-reject-professor]");
+        const resetManaged = e.target.closest("[data-reset-managed]");
+        const toggleManaged = e.target.closest("[data-toggle-managed]");
         try {
           if (load) {
             const cert = await fetchCertificate(load.dataset.loadCert);
@@ -2661,6 +2824,8 @@
           if (reject) await rejectCertificate(reject.dataset.rejectCert);
           if (approveProfessor) await approveProfessorRequest(approveProfessor.dataset.approveProfessor, approveProfessor.dataset.role);
           if (rejectProfessor) await rejectProfessorRequest(rejectProfessor.dataset.rejectProfessor);
+          if (resetManaged) await resetManagedPassword(resetManaged.dataset.resetManaged);
+          if (toggleManaged) await toggleManagedAccount(toggleManaged.dataset.toggleManaged, toggleManaged.dataset.disabled === "true");
         } catch (error) {
           console.error(error);
           setStatus("Falha na operação. Confira console, login e regras do Firestore.");
@@ -2678,6 +2843,7 @@
         firebase.initializeApp(window.firebaseConfig);
         state.auth = firebase.auth();
         state.db = firebase.firestore();
+        state.functions = firebase.functions();
         state.firebaseReady = true;
       } catch (error) {
         console.error(error);
@@ -2698,6 +2864,7 @@
         if (!user) {
           state.profile = null;
           $("#appRoot").classList.add("hidden");
+          $("#firstAccessScreen").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
           const message = state.authNotice || "Firebase conectado. Informe seu e-mail e senha autorizados.";
           state.authNotice = "";
@@ -2720,6 +2887,26 @@
           return;
         }
         state.profile = snap.data();
+
+        if (state.profile.status === "disabled") {
+          state.profile = null;
+          $("#appRoot").classList.add("hidden");
+          $("#firstAccessScreen").classList.add("hidden");
+          $("#authScreen").classList.remove("hidden");
+          state.authNotice = "Esta conta está bloqueada. Procure o administrador.";
+          await state.auth.signOut();
+          return;
+        }
+
+        if (state.profile.mustChangePassword === true) {
+          $("#authScreen").classList.add("hidden");
+          $("#appRoot").classList.add("hidden");
+          $("#firstAccessScreen").classList.remove("hidden");
+          $("#firstAccessStatus").textContent = "Defina uma nova senha para concluir o primeiro acesso.";
+          return;
+        }
+
+        $("#firstAccessScreen").classList.add("hidden");
         if (!["professor", "admin"].includes(state.profile.role)) {
           state.profile = null;
           $("#appRoot").classList.add("hidden");
@@ -2733,14 +2920,19 @@
         $("#userRoleLabel").textContent = roleLabel(state.profile.role);
         $("#userNameLabel").textContent = state.profile.name || email;
         $("#certificateQueueButton").classList.remove("hidden");
-        $("#professorAccessButton").classList.remove("hidden");
+        $("#professorAccessButton").classList.toggle("hidden", !isAdmin());
         $("#certificateQueueLabel").textContent = isAdmin() ? "Aprovar Faixa" : "Pendente de aprovação";
-        $("#professorAccessLabel").textContent = isAdmin() ? "Autorizar professor" : "Cadastrar professor";
-        $("#professorAccessButton").dataset.pageTarget = isAdmin() ? "adminPage" : "professorRequestPage";
+        if (isAdmin()) {
+          $("#professorAccessLabel").textContent = "Gerenciar acessos";
+          $("#professorAccessButton").dataset.pageTarget = "adminPage";
+        }
         setStatus("Sistema conectado. Certificados gerados serão registrados com código de autenticação.");
         await loadHistory();
         await loadPendingApprovals();
-        if (isAdmin()) await loadProfessorRequests();
+        if (isAdmin()) {
+          await loadProfessorRequests();
+          await loadManagedAccounts();
+        }
         updatePdfButtonText();
       } catch (error) {
         console.error(error);
@@ -2806,20 +2998,11 @@
           loginWithEmail();
         });
       });
+      const firstAccessBtn = $("#completeFirstAccessBtn");
+      if (firstAccessBtn) firstAccessBtn.addEventListener("click", completeFirstAccess);
 
-      $("#resetPasswordBtn").addEventListener("click", async () => {
-        try {
-          const email = $("#loginEmail").value.trim().toLowerCase();
-          if (!email) return setAuthStatus("Informe o e-mail para recuperar senha.");
-          if (!state.auth) return setAuthStatus("Firebase ainda está carregando. Aguarde alguns segundos e tente novamente.");
-          setAuthStatus("Enviando e-mail de recuperação...");
-          await state.auth.sendPasswordResetEmail(email);
-          setAuthStatus("E-mail de recuperação enviado, se a conta existir.");
-        } catch (error) {
-          console.error(error);
-          setAuthStatus("Não foi possível enviar a recuperação de senha. Confira o e-mail e a configuração do Firebase.");
-        }
-      });
+      const createManagedBtn = $("#createManagedAccountBtn");
+      if (createManagedBtn) createManagedBtn.addEventListener("click", createManagedAccount);
 
       $("#logoutBtn").addEventListener("click", () => state.auth && state.auth.signOut());
       $("#submitProfessorRequestBtn").addEventListener("click", submitProfessorRequest);
