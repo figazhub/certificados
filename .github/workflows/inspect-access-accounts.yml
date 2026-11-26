@@ -1,0 +1,57 @@
+name: Inspect Firebase Access Accounts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-access-accounts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Install Firebase Admin
+        run: npm install --no-save firebase-admin@latest
+      - name: Inspect access accounts
+        run: |
+          node <<'NODE'
+          const { initializeApp } = require('firebase-admin/app');
+          const { getAuth } = require('firebase-admin/auth');
+          const { getFirestore } = require('firebase-admin/firestore');
+
+          initializeApp({ projectId: 'cert-generator-3b9bb' });
+          const auth = getAuth();
+          const db = getFirestore();
+
+          (async () => {
+            let users = [];
+            let pageToken;
+            do {
+              const page = await auth.listUsers(1000, pageToken);
+              users.push(...page.users);
+              pageToken = page.pageToken;
+            } while (pageToken);
+
+            const profiles = await db.collection('usersByEmail').get();
+
+            console.log('AUTH_COUNT=' + users.length);
+            console.log('AUTH_EMAILS=' + users.map(u => u.email || '').filter(Boolean).join(','));
+            console.log('PROFILE_COUNT=' + profiles.size);
+            console.log('PROFILE_IDS=' + profiles.docs.map(d => d.id).join(','));
+          })().catch(err => {
+            console.error(err);
+            process.exit(1);
+          });
+          NODE
