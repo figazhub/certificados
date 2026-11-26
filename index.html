@@ -1750,6 +1750,250 @@
       }
     }
 
+  
+    /* Ajuste fino da tela de login conforme referência aprovada */
+    #authScreen .login-shell {
+      width:min(1450px, calc(100vw - 54px));
+      min-height:min(860px, calc(100vh - 54px));
+      grid-template-columns:minmax(0, 1.08fr) minmax(430px, .92fr);
+      border-radius:34px;
+      background:
+        linear-gradient(115deg, rgba(20,24,29,.94), rgba(8,11,15,.96) 56%, rgba(8,11,15,.98));
+      border:1px solid rgba(255,255,255,.19);
+      box-shadow:
+        0 42px 110px rgba(0,0,0,.56),
+        inset 0 1px 0 rgba(255,255,255,.045);
+    }
+
+    #authScreen .login-shell::after {
+      content:"";
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:1;
+      background:
+        radial-gradient(circle at 7% 5%, rgba(255,92,0,.22), transparent 25%),
+        linear-gradient(151deg, transparent 0 36%, rgba(255,255,255,.025) 36.2% 36.7%, transparent 37%),
+        linear-gradient(162deg, transparent 0 49%, rgba(255,101,0,.13) 49.2% 49.55%, transparent 49.8%),
+        linear-gradient(28deg, transparent 0 77%, rgba(255,104,0,.09) 77.2% 77.45%, transparent 77.7%);
+      border-radius:inherit;
+    }
+
+    #authScreen .login-brand-panel {
+      padding:clamp(54px, 6.1vw, 92px) clamp(48px, 6vw, 88px);
+      align-items:center;
+      border-right:0;
+      background:
+        radial-gradient(circle at 8% 8%, rgba(255,93,0,.18), transparent 30%),
+        linear-gradient(145deg, rgba(255,255,255,.018), transparent 52%);
+    }
+
+    #authScreen .login-brand-panel::after {
+      content:"";
+      position:absolute;
+      left:-7%;
+      bottom:-5%;
+      width:58%;
+      height:70%;
+      pointer-events:none;
+      opacity:.56;
+      background:
+        radial-gradient(ellipse at 28% 68%, rgba(255,255,255,.055), transparent 33%),
+        repeating-linear-gradient(64deg, rgba(255,255,255,.022) 0 1px, transparent 1px 7px);
+      transform:skewX(-8deg) rotate(4deg);
+      filter:contrast(1.15);
+      -webkit-mask-image:linear-gradient(to right, #000 0 62%, transparent 100%);
+      mask-image:linear-gradient(to right, #000 0 62%, transparent 100%);
+    }
+
+    #authScreen .login-brand-content {
+      max-width:690px;
+    }
+
+    #authScreen .login-kicker {
+      margin-bottom:29px;
+      font-size:11px;
+      letter-spacing:.31em;
+    }
+
+    #authScreen .login-main-logo {
+      width:min(390px, 78%);
+      max-height:100px;
+      margin-bottom:58px;
+    }
+
+    #authScreen .login-brand-panel h1 {
+      max-width:680px;
+      font-family:"Arial Black","Exo2ExtraBoldItalic",Arial,sans-serif;
+      font-size:clamp(48px, 5vw, 76px);
+      line-height:.99;
+      letter-spacing:-.052em;
+      text-shadow:0 8px 30px rgba(0,0,0,.48);
+    }
+
+    #authScreen .login-accent-line {
+      width:74px;
+      margin:28px 0 25px;
+    }
+
+    #authScreen .login-brand-panel p {
+      max-width:600px;
+      font-size:15.5px;
+      line-height:1.72;
+      color:rgba(255,255,255,.72);
+    }
+
+    #authScreen .login-form-panel {
+      position:relative;
+      z-index:3;
+      padding:clamp(48px, 5vw, 72px) clamp(38px, 4.8vw, 66px);
+      background:transparent;
+    }
+
+    #authScreen .login-form-card {
+      width:min(510px, 100%);
+      min-height:700px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding:clamp(44px, 4vw, 58px);
+      border:1px solid rgba(255,255,255,.26);
+      border-radius:42px;
+      background:
+        linear-gradient(160deg, rgba(255,255,255,.065), rgba(255,255,255,.025) 35%, rgba(8,11,15,.54) 76%),
+        rgba(12,15,19,.66);
+      box-shadow:
+        0 28px 68px rgba(0,0,0,.36),
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 0 58px rgba(255,106,0,.055);
+      backdrop-filter:blur(24px);
+      overflow:hidden;
+      position:relative;
+    }
+
+    #authScreen .login-form-card::before {
+      content:"";
+      position:absolute;
+      inset:-35% -45% auto auto;
+      width:90%;
+      height:55%;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(255,255,255,.08), transparent 64%);
+      transform:rotate(-20deg);
+      pointer-events:none;
+    }
+
+    #authScreen .login-form-card::after {
+      content:"";
+      position:absolute;
+      right:-18%;
+      bottom:-20%;
+      width:68%;
+      height:42%;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(255,106,0,.20), rgba(255,106,0,.045) 44%, transparent 70%);
+      filter:blur(12px);
+      animation:loginGlow 6.5s ease-in-out infinite;
+      pointer-events:none;
+    }
+
+    #authScreen .login-icon-mark,
+    #authScreen .login-form-card h2,
+    #authScreen .login-title-line,
+    #authScreen .login-fields {
+      position:relative;
+      z-index:2;
+    }
+
+    #authScreen .login-icon-mark {
+      width:82px;
+      height:82px;
+      margin:0 auto 29px;
+      border-radius:25px;
+      color:#ff963f;
+      border-color:rgba(255,145,65,.52);
+      background:linear-gradient(155deg, rgba(255,114,28,.10), rgba(255,255,255,.025));
+      box-shadow:
+        0 0 31px rgba(255,106,0,.16),
+        inset 0 1px 0 rgba(255,255,255,.08);
+    }
+
+    #authScreen .login-form-card h2 {
+      font-size:clamp(39px, 3.5vw, 55px);
+      line-height:.98;
+      letter-spacing:-.05em;
+      margin:0;
+    }
+
+    #authScreen .login-title-line {
+      width:74px;
+      margin:27px 0 40px;
+    }
+
+    #authScreen .login-fields {
+      gap:20px;
+    }
+
+    #authScreen .login-input-wrap {
+      min-height:62px;
+      border-radius:18px;
+      border-color:rgba(255,255,255,.22);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.028));
+      box-shadow:
+        inset 0 1px rgba(255,255,255,.04),
+        0 13px 30px rgba(0,0,0,.12);
+    }
+
+    #authScreen .login-input-wrap input {
+      height:60px;
+      min-height:60px;
+      font-size:15.5px;
+    }
+
+    #authScreen .login-submit {
+      min-height:64px;
+      border-radius:18px;
+      font-size:16px;
+      background:linear-gradient(135deg, #ff6100 0%, #ff7e18 52%, #ff9b3f 100%);
+      box-shadow:
+        0 18px 42px rgba(255,106,0,.28),
+        inset 0 1px 0 rgba(255,255,255,.34);
+    }
+
+    #authScreen .auth-status {
+      margin-top:4px;
+      min-height:18px;
+    }
+
+    @media (max-width: 940px) {
+      #authScreen .login-shell {
+        width:min(680px, calc(100vw - 22px));
+        min-height:auto;
+        grid-template-columns:1fr;
+      }
+      #authScreen .login-form-card {
+        min-height:auto;
+        border-radius:28px;
+        padding:36px;
+      }
+      #authScreen .login-form-panel {
+        padding:30px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      #authScreen .login-shell {
+        width:100%;
+      }
+      #authScreen .login-form-card {
+        padding:28px 22px;
+        border-radius:24px;
+      }
+      #authScreen .login-form-panel {
+        padding:18px;
+      }
+    }
+
   </style>
 </head>
 
@@ -1766,11 +2010,6 @@
           <h1>DISCIPLINA<br>DENTRO E FORA<br>DO TATAME.</h1>
           <div class="login-accent-line"></div>
           <p>Emissão, aprovação e autenticação digital de certificados em um ambiente seguro para professores autorizados.</p>
-          <div class="login-feature-row" aria-hidden="true">
-            <span>Certificados</span>
-            <span>Jiu-Jítsu</span>
-            <span>Segurança</span>
-          </div>
         </div>
       </section>
 
