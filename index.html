@@ -1994,6 +1994,26 @@
       }
     }
 
+  
+    /* Corrige o fundo claro aplicado pelo autofill do navegador nos campos de login */
+    #authScreen .login-input-wrap input:-webkit-autofill,
+    #authScreen .login-input-wrap input:-webkit-autofill:hover,
+    #authScreen .login-input-wrap input:-webkit-autofill:focus,
+    #authScreen .login-input-wrap input:-webkit-autofill:active {
+      -webkit-text-fill-color:#ffffff !important;
+      caret-color:#ffffff !important;
+      -webkit-box-shadow:0 0 0 1000px #171b20 inset !important;
+      box-shadow:0 0 0 1000px #171b20 inset !important;
+      border:0 !important;
+      transition:background-color 9999s ease-out 0s;
+    }
+
+    #authScreen .login-input-wrap input:autofill {
+      color:#ffffff !important;
+      background:#171b20 !important;
+      box-shadow:0 0 0 1000px #171b20 inset !important;
+    }
+
   </style>
 </head>
 
@@ -2017,9 +2037,12 @@
         <div class="login-form-card">
           <div class="login-icon-mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <circle cx="12" cy="7" r="3.2"/>
-              <path d="M6 20c.7-4.2 2.7-6.2 6-6.2s5.3 2 6 6.2"/>
-              <path d="M9.1 12.6 12 15l2.9-2.4"/>
+              <path d="M6.5 3.5h8l3 3v8.2"/>
+              <path d="M14.5 3.5v3.4h3"/>
+              <path d="M8.5 9h5.5M8.5 12h3.8"/>
+              <circle cx="15.7" cy="16.2" r="2.6"/>
+              <path d="m14.2 18.3-.7 2.2 2.2-1 2.1 1-.6-2.2"/>
+              <path d="M6.5 3.5v17h5.2"/>
             </svg>
           </div>
           <h2>Acesso dos<br>professores</h2>
