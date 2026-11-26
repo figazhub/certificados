@@ -2364,15 +2364,12 @@
         <section class="workspace-page" id="adminPage">
           <div class="workflow-box" id="accountAdminPanel">
             <h2>Gerenciar acessos</h2>
-            <p class="firebase-status">Crie contas com senha provisória. O professor será obrigado a definir uma nova senha no primeiro acesso.</p>
-            <div class="admin-form">
-              <input id="managedProfessorName" type="text" placeholder="Nome completo" />
-              <input id="managedProfessorEmail" type="email" placeholder="E-mail do professor" />
-              <input id="managedProfessorGraduation" type="text" placeholder="Graduação" />
-              <input id="managedProfessorUnit" type="text" placeholder="Unidade / polo" />
-              <button class="mini-btn" type="button" id="createManagedAccountBtn">Criar acesso com senha provisória</button>
-              <div class="firebase-status" id="managedAccountStatus"></div>
-            </div>
+            <p class="firebase-status">Os acessos são cadastrados e as senhas são redefinidas diretamente no Firebase. Esta área exibe os professores autorizados.</p>
+            <p class="firebase-status">
+              <a href="https://console.firebase.google.com/project/cert-generator-3b9bb/authentication/users" target="_blank" rel="noopener noreferrer">Gerenciar logins</a>
+              ·
+              <a href="https://console.firebase.google.com/project/cert-generator-3b9bb/firestore/databases/-default-/data" target="_blank" rel="noopener noreferrer">Gerenciar perfis autorizados</a>
+            </p>
             <div class="workflow-list" id="managedAccountsList" style="margin-top:16px">Carregando acessos...</div>
           </div>
 
@@ -3482,17 +3479,10 @@
       const disabled = profile.status === "disabled";
       const pendingPassword = profile.mustChangePassword === true;
       const statusLabel = disabled ? "Bloqueado" : pendingPassword ? "Troca de senha obrigatória" : "Ativo";
-      const isProtectedAdmin = profile.role === "admin";
       return `
         <div class="workflow-item">
           <strong>${escapeHtml(profile.name || email)}</strong>
           <small>${escapeHtml(email)} · ${escapeHtml(profile.graduation || "Graduação não informada")} · ${escapeHtml(profile.unit || "Extremo Norte")}<br>Status: ${escapeHtml(statusLabel)} · Perfil: ${escapeHtml(roleLabel(profile.role))}</small>
-          <div class="request-actions">
-            ${isProtectedAdmin ? "" : `
-              <button class="mini-btn" type="button" data-reset-managed="${escapeHtml(email)}">Gerar nova senha provisória</button>
-              <button class="mini-btn secondary" type="button" data-toggle-managed="${escapeHtml(email)}" data-disabled="${disabled ? "false" : "true"}">${disabled ? "Desbloquear" : "Bloquear"}</button>
-            `}
-          </div>
         </div>`;
     }
 
