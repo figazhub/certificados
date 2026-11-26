@@ -1316,630 +1316,437 @@
       }
     }
   
-    /* ===== UI 2026 · Extremo Tech / Jiu-Jitsu ===== */
-    @keyframes authGridFlow {
+    /* Login 2026 — aplicado somente às telas de autenticação */
+    @keyframes loginAmbient {
+      0%,100% { transform: translate3d(-4%, -2%, 0) rotate(-8deg); opacity:.52; }
+      50% { transform: translate3d(5%, 4%, 0) rotate(-5deg); opacity:.78; }
+    }
+    @keyframes loginGrid {
       from { transform: translate3d(0,0,0); }
       to { transform: translate3d(48px,48px,0); }
     }
-    @keyframes authGlow {
-      0%,100% { transform: translate3d(-6%,-4%,0) scale(1); opacity:.62; }
-      50% { transform: translate3d(10%,8%,0) scale(1.16); opacity:.9; }
-    }
-    @keyframes chipFloat {
-      0%,100% { transform: translate3d(0,0,0) rotate(-2deg); }
-      50% { transform: translate3d(0,-14px,0) rotate(2deg); }
-    }
-    @keyframes beltDrift {
-      0%,100% { transform: rotate(-12deg) translateX(-2%); }
-      50% { transform: rotate(-8deg) translateX(4%); }
-    }
-    @keyframes pulseRing {
-      0%,100% { box-shadow: 0 0 0 0 rgba(255,106,0,.26); }
-      50% { box-shadow: 0 0 0 8px rgba(255,106,0,0); }
+    @keyframes loginGlow {
+      0%,100% { opacity:.55; transform: scale(1); }
+      50% { opacity:.9; transform: scale(1.08); }
     }
 
-    .auth-screen {
-      position: relative;
+    #authScreen,
+    #firstAccessScreen {
+      min-height: 100vh;
+      padding: clamp(16px, 3vw, 34px);
       overflow: hidden;
+      position: relative;
       isolation: isolate;
-      padding: clamp(20px, 4vw, 56px);
       background:
-        radial-gradient(circle at 18% 18%, rgba(255,106,0,.20), transparent 28%),
-        radial-gradient(circle at 78% 72%, rgba(255,138,28,.08), transparent 34%),
-        linear-gradient(135deg, #07090c 0%, #11161c 47%, #080a0d 100%);
+        radial-gradient(circle at 8% 10%, rgba(255,106,0,.18), transparent 28%),
+        radial-gradient(circle at 86% 82%, rgba(255,120,26,.08), transparent 28%),
+        linear-gradient(145deg, #05070a 0%, #0b0f14 45%, #06080b 100%);
     }
 
-    .auth-screen::before {
-      content: "";
-      position: absolute;
-      inset: -80px;
-      z-index: -3;
-      opacity: .13;
+    #authScreen::before,
+    #firstAccessScreen::before {
+      content:"";
+      position:absolute;
+      inset:-70px;
+      z-index:-3;
+      opacity:.10;
       background-image:
-        linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
-      background-size: 48px 48px;
-      -webkit-mask-image: radial-gradient(circle at 45% 45%, #000 0 52%, transparent 82%);
-      mask-image: radial-gradient(circle at 45% 45%, #000 0 52%, transparent 82%);
-      animation: authGridFlow 18s linear infinite;
+        linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size:48px 48px;
+      animation:loginGrid 22s linear infinite;
+      -webkit-mask-image:radial-gradient(circle at 50% 45%, #000 0 38%, transparent 78%);
+      mask-image:radial-gradient(circle at 50% 45%, #000 0 38%, transparent 78%);
     }
 
-    .auth-screen::after {
-      content: "";
-      position: absolute;
-      width: 52vw;
-      height: 52vw;
-      min-width: 520px;
-      min-height: 520px;
-      left: -18vw;
-      top: -24vw;
-      z-index: -2;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,106,0,.24), rgba(255,106,0,.04) 45%, transparent 70%);
-      filter: blur(18px);
-      animation: authGlow 12s ease-in-out infinite;
-    }
-
-    .auth-stage {
-      width: min(1180px, 100%);
-      min-height: min(720px, calc(100vh - 64px));
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(390px, .85fr);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 34px;
-      overflow: hidden;
-      position: relative;
-      background: rgba(12,16,21,.64);
-      box-shadow: 0 38px 90px rgba(0,0,0,.52), inset 0 1px rgba(255,255,255,.05);
-      backdrop-filter: blur(24px);
-    }
-
-    .auth-visual {
-      position: relative;
-      overflow: hidden;
-      padding: clamp(38px, 6vw, 76px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-height: 650px;
-      border-right: 1px solid rgba(255,255,255,.08);
+    #authScreen::after,
+    #firstAccessScreen::after {
+      content:"";
+      position:absolute;
+      left:-12vw;
+      bottom:-24vw;
+      width:72vw;
+      height:45vw;
+      min-width:700px;
+      min-height:420px;
+      z-index:-2;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.05);
       background:
-        linear-gradient(145deg, rgba(255,255,255,.025), transparent 45%),
-        radial-gradient(circle at 28% 32%, rgba(255,106,0,.10), transparent 32%);
+        linear-gradient(120deg, transparent 15%, rgba(255,255,255,.025) 35%, rgba(255,106,0,.12) 51%, rgba(255,255,255,.035) 58%, transparent 75%);
+      filter:blur(8px);
+      animation:loginAmbient 13s ease-in-out infinite;
     }
 
-    .auth-visual-grid {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      opacity: .2;
+    .login-shell {
+      width:min(1380px, 100%);
+      min-height:min(800px, calc(100vh - 40px));
+      display:grid;
+      grid-template-columns:minmax(0, 1.15fr) minmax(390px, .85fr);
+      overflow:hidden;
+      position:relative;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:34px;
+      background:rgba(10,13,17,.72);
+      box-shadow:0 40px 100px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.04);
+      backdrop-filter:blur(20px);
+    }
+
+    .login-shell::before {
+      content:"";
+      position:absolute;
+      top:0;
+      left:4%;
+      right:4%;
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(255,124,36,.95) 13%, rgba(255,255,255,.38) 52%, rgba(255,124,36,.75) 86%, transparent);
+      box-shadow:0 0 24px rgba(255,106,0,.28);
+      z-index:5;
+    }
+
+    .login-brand-panel {
+      position:relative;
+      min-width:0;
+      padding:clamp(46px, 6vw, 82px);
+      display:flex;
+      align-items:center;
+      overflow:hidden;
+      border-right:1px solid rgba(255,255,255,.08);
       background:
-        linear-gradient(115deg, transparent 0 47%, rgba(255,106,0,.18) 47.2% 47.6%, transparent 47.8%),
-        linear-gradient(25deg, transparent 0 70%, rgba(255,255,255,.08) 70.2% 70.5%, transparent 70.7%);
+        radial-gradient(circle at 20% 14%, rgba(255,106,0,.15), transparent 28%),
+        linear-gradient(145deg, rgba(255,255,255,.025), transparent 45%);
     }
 
-    .auth-kicker {
-      color: var(--orange2);
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .22em;
-      text-transform: uppercase;
-      margin-bottom: 22px;
-    }
-
-    .auth-brand-logo {
-      width: min(440px, 84%);
-      max-height: 94px;
-      object-fit: contain;
-      object-position: left center;
-      filter: drop-shadow(0 14px 30px rgba(0,0,0,.5));
-      margin-bottom: 42px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .auth-visual h1 {
-      margin: 0;
-      max-width: 640px;
-      color: #f7f8fa;
-      font-family: "Exo2ExtraBoldItalic", Arial, sans-serif;
-      font-size: clamp(42px, 5vw, 74px);
-      line-height: .96;
-      letter-spacing: -.045em;
-      text-transform: uppercase;
-      position: relative;
-      z-index: 2;
-    }
-
-    .auth-visual h1::after {
-      content: "";
-      display: block;
-      width: 74px;
-      height: 4px;
-      margin-top: 26px;
-      border-radius: 999px;
-      background: linear-gradient(90deg, var(--orange), #ffbd69);
-      box-shadow: 0 0 28px rgba(255,106,0,.45);
-    }
-
-    .auth-visual > p {
-      max-width: 590px;
-      margin: 26px 0 0;
-      color: rgba(255,255,255,.62);
-      line-height: 1.75;
-      font-size: 15px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .auth-tech-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
-      margin-top: 28px;
-      position: relative;
-      z-index: 2;
-    }
-
-    .auth-tech-tags span {
-      padding: 8px 11px;
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 999px;
-      color: rgba(255,255,255,.7);
-      background: rgba(255,255,255,.035);
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .12em;
-    }
-
-    .floating-chip {
-      position: absolute;
-      z-index: 1;
-      padding: 9px 12px;
-      border: 1px solid rgba(255,138,28,.24);
-      border-radius: 11px;
-      background: rgba(15,19,24,.72);
-      color: rgba(255,189,105,.72);
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: .15em;
-      box-shadow: 0 14px 30px rgba(0,0,0,.22);
-      backdrop-filter: blur(12px);
-      animation: chipFloat 6s ease-in-out infinite;
-    }
-
-    .chip-a { right: 9%; top: 19%; }
-    .chip-b { right: 18%; bottom: 18%; animation-delay: -2s; }
-    .chip-c { left: 10%; bottom: 9%; animation-delay: -4s; }
-
-    .belt-orbit {
-      position: absolute;
-      height: 18px;
-      width: 72%;
-      right: -26%;
-      border-radius: 4px;
-      opacity: .16;
-      transform: rotate(-12deg);
-      animation: beltDrift 9s ease-in-out infinite;
-    }
-
-    .belt-orbit-a {
-      top: 34%;
-      background: linear-gradient(90deg, #060606 0 69%, #dc2626 69% 82%, #060606 82%);
-    }
-
-    .belt-orbit-b {
-      top: 41%;
-      background: linear-gradient(90deg, #7c2d12 0 69%, #080808 69% 82%, #7c2d12 82%);
-      animation-delay: -3s;
-    }
-
-    .auth-card.auth-card-modern {
-      width: auto;
-      max-width: none;
-      border-radius: 0;
-      border: 0;
-      box-shadow: none;
+    .login-brand-noise {
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      opacity:.18;
       background:
-        linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
-        rgba(8,11,15,.82);
-      padding: clamp(34px, 5vw, 64px);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      color: #fff;
+        linear-gradient(115deg, transparent 0 48%, rgba(255,106,0,.18) 48.2% 48.45%, transparent 48.7%),
+        linear-gradient(28deg, transparent 0 72%, rgba(255,255,255,.055) 72.2% 72.45%, transparent 72.7%);
     }
 
-    .auth-card-badge {
-      align-self: flex-start;
-      margin-bottom: 18px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: rgba(255,106,0,.10);
-      border: 1px solid rgba(255,106,0,.24);
-      color: #ff9a4d;
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: .14em;
+    .login-brand-flow {
+      position:absolute;
+      width:78%;
+      height:22px;
+      right:-32%;
+      border-radius:999px;
+      transform:rotate(-12deg);
+      filter:blur(.2px);
+      opacity:.20;
+      animation:loginAmbient 11s ease-in-out infinite;
     }
 
-    .auth-card.auth-card-modern h2 {
-      margin: 0 0 10px;
-      color: #fff;
-      font-family: "Exo2ExtraBoldItalic", Arial, sans-serif;
-      font-size: clamp(29px, 3vw, 40px);
-      line-height: 1;
-      letter-spacing: -.025em;
+    .flow-one {
+      top:35%;
+      background:linear-gradient(90deg, #050505 0 70%, #ef5b18 70% 84%, #050505 84%);
     }
 
-    .auth-card.auth-card-modern > p {
-      margin: 0 0 30px;
-      color: rgba(255,255,255,.53);
-      line-height: 1.55;
-      font-size: 14px;
+    .flow-two {
+      top:42%;
+      background:linear-gradient(90deg, #1c1f23, #9097a1 70%, #1c1f23);
+      animation-delay:-3.5s;
     }
 
-    .auth-card-modern .auth-grid {
-      gap: 16px;
+    .login-brand-content {
+      width:100%;
+      max-width:680px;
+      position:relative;
+      z-index:2;
     }
 
-    .auth-card-modern .auth-grid label {
-      color: rgba(255,255,255,.72);
-      font-size: 11px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
+    .login-kicker {
+      margin-bottom:28px;
+      color:rgba(255,255,255,.72);
+      font-family:"Segoe UI", Arial, sans-serif;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.28em;
+      text-transform:uppercase;
     }
 
-    .auth-card-modern .auth-grid input {
-      height: 54px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.11);
-      background: rgba(255,255,255,.045);
-      color: #fff;
-      box-shadow: inset 0 1px rgba(255,255,255,.025);
-      transition: .22s ease;
+    .login-kicker span { color:#ff7b22; }
+
+    .login-main-logo {
+      width:min(410px, 82%);
+      height:auto;
+      max-height:105px;
+      object-fit:contain;
+      object-position:left center;
+      filter:drop-shadow(0 14px 28px rgba(0,0,0,.55));
+      margin-bottom:58px;
     }
 
-    .auth-card-modern .auth-grid input::placeholder {
-      color: rgba(255,255,255,.28);
+    .login-brand-panel h1 {
+      margin:0;
+      color:#f8f8f8;
+      font-family:"Arial Black","Segoe UI",Arial,sans-serif;
+      font-size:clamp(46px, 5.2vw, 78px);
+      font-style:italic;
+      font-weight:900;
+      line-height:.98;
+      letter-spacing:-.055em;
+      text-transform:uppercase;
+      text-shadow:0 7px 28px rgba(0,0,0,.36);
     }
 
-    .auth-card-modern .auth-grid input:focus {
-      border-color: rgba(255,106,0,.68);
-      background: rgba(255,255,255,.065);
-      box-shadow: 0 0 0 4px rgba(255,106,0,.09), 0 12px 28px rgba(0,0,0,.16);
+    .login-accent-line {
+      width:72px;
+      height:4px;
+      margin:28px 0 24px;
+      border-radius:999px;
+      background:linear-gradient(90deg,#ff6500,#ff9a42);
+      box-shadow:0 0 24px rgba(255,106,0,.44);
     }
 
-    .auth-primary {
-      height: 54px;
-      margin-top: 5px;
-      border-radius: 14px;
-      justify-content: space-between;
-      padding: 0 18px 0 21px;
-      background: linear-gradient(135deg, #ff5f00, #ff8628);
-      box-shadow: 0 16px 32px rgba(255,106,0,.20);
-      transition: transform .2s ease, box-shadow .2s ease;
+    .login-brand-panel p {
+      max-width:590px;
+      margin:0;
+      color:rgba(255,255,255,.68);
+      font-family:"Segoe UI",Arial,sans-serif;
+      font-size:15px;
+      line-height:1.7;
     }
 
-    .auth-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 38px rgba(255,106,0,.28);
+    .login-feature-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:32px;
     }
 
-    .auth-primary svg { width: 20px; height: 20px; }
-    .auth-card-modern .auth-status { color: #ffba82; }
-
-    .auth-card-footer {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      margin-top: 28px;
-      padding-top: 22px;
-      border-top: 1px solid rgba(255,255,255,.08);
-      color: rgba(255,255,255,.38);
-      font-size: 11px;
-      line-height: 1.4;
+    .login-feature-row span {
+      padding:9px 13px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      background:rgba(255,255,255,.035);
+      color:rgba(255,255,255,.72);
+      font-family:"Segoe UI",Arial,sans-serif;
+      font-size:10px;
+      font-weight:600;
+      letter-spacing:.04em;
+      box-shadow:inset 0 1px rgba(255,255,255,.03);
     }
 
-    .status-dot,
-    .side-pulse {
-      width: 7px;
-      height: 7px;
-      flex: 0 0 auto;
-      border-radius: 50%;
-      background: #31d158;
-      box-shadow: 0 0 14px rgba(49,209,88,.65);
-      animation: pulseRing 2.2s infinite;
-    }
-
-    .app {
-      grid-template-columns: 104px minmax(0, 1fr);
-      grid-template-rows: 88px minmax(0, 1fr);
-      grid-template-areas:
-        "side top"
-        "side main";
-      background: #0d1116;
-    }
-
-    .topbar {
-      height: 88px;
-      margin: 12px 16px 0 14px;
-      padding: 0 18px 0 20px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,.08);
-      background: rgba(18,23,29,.86);
-      box-shadow: 0 18px 42px rgba(0,0,0,.24);
-      backdrop-filter: blur(20px);
-      z-index: 20;
-    }
-
-    .brand-emblem {
-      width: 245px;
-      height: 48px;
-      max-width: min(31vw, 245px);
-    }
-
-    .top-actions {
-      height: auto;
-      align-items: center;
-      gap: 7px;
-      margin-right: 12px;
-      overflow: visible;
-    }
-
-    .top-action {
-      min-width: auto;
-      height: 44px;
-      padding: 0 13px;
-      gap: 8px;
-      border: 1px solid rgba(255,255,255,.07);
-      border-radius: 13px;
-      background: rgba(255,255,255,.035);
-      color: rgba(255,255,255,.78);
-      transition: .2s ease;
-    }
-
-    .top-action:hover {
-      color: #fff;
-      background: rgba(255,106,0,.11);
-      border-color: rgba(255,106,0,.22);
-      transform: translateY(-1px);
-    }
-
-    .top-action svg { width: 18px; height: 18px; }
-    .top-action[data-pdf] {
-      background: linear-gradient(135deg, rgba(255,95,0,.92), rgba(255,134,40,.92));
-      border-color: transparent;
-      color: #fff;
-      box-shadow: 0 9px 24px rgba(255,106,0,.18);
-    }
-
-    .user-box {
-      min-width: 0;
-      gap: 10px;
-      border-left: 0;
-      padding: 8px 8px 8px 13px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.035);
-      border: 1px solid rgba(255,255,255,.065);
-    }
-
-    .logout-btn {
-      border-color: rgba(255,255,255,.09);
-      border-radius: 10px;
-      background: rgba(255,255,255,.04);
-      color: rgba(255,255,255,.72);
-      transition: .2s ease;
-    }
-
-    .logout-btn:hover {
-      background: rgba(255,106,0,.12);
-      color: #fff;
-      border-color: rgba(255,106,0,.2);
-    }
-
-    .sidebar {
-      grid-area: side;
-      display: flex !important;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px 10px;
+    .login-form-panel {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:clamp(38px, 5vw, 72px);
       background:
-        radial-gradient(circle at 50% 7%, rgba(255,106,0,.11), transparent 22%),
-        #0b0f13;
-      border-right: 1px solid rgba(255,255,255,.06);
-      z-index: 30;
+        linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.008)),
+        rgba(7,10,14,.72);
     }
 
-    .sidebar-brand-mark {
-      width: 58px;
-      height: 58px;
-      display: grid;
-      place-items: center;
-      border-radius: 18px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.08);
-      box-shadow: 0 14px 30px rgba(0,0,0,.22);
+    .login-form-card {
+      width:min(500px, 100%);
     }
 
-    .sidebar-brand-mark img {
-      width: 40px;
-      height: 40px;
-      object-fit: contain;
+    .login-icon-mark {
+      width:84px;
+      height:84px;
+      display:grid;
+      place-items:center;
+      margin-bottom:28px;
+      border:1px solid rgba(255,123,34,.46);
+      border-radius:26px;
+      color:#ff8a32;
+      background:linear-gradient(145deg, rgba(255,106,0,.10), rgba(255,255,255,.018));
+      box-shadow:0 0 34px rgba(255,106,0,.16), inset 0 1px rgba(255,255,255,.06);
     }
 
-    .nav {
-      width: 100%;
-      margin-top: 34px;
-      display: grid;
-      gap: 11px;
+    .login-icon-mark svg { width:42px; height:42px; }
+
+    .login-form-card h2 {
+      margin:0;
+      color:#fff;
+      font-family:"Segoe UI",Arial,sans-serif;
+      font-size:clamp(36px, 3.2vw, 54px);
+      font-style:italic;
+      font-weight:800;
+      line-height:.98;
+      letter-spacing:-.045em;
     }
 
-    .nav-item {
-      appearance: none;
-      width: 100%;
-      height: 68px;
-      border: 1px solid transparent;
-      border-radius: 18px;
-      background: transparent;
-      color: rgba(255,255,255,.43);
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 7px 4px;
-      font-family: "Exo2Regular", Arial, sans-serif;
-      font-size: 9px;
-      font-weight: 900;
-      letter-spacing: .04em;
-      border-left: 1px solid transparent;
-      transition: .2s ease;
+    .login-title-line {
+      width:72px;
+      height:4px;
+      margin:25px 0 36px;
+      border-radius:999px;
+      background:linear-gradient(90deg,#ff6500,#ff9a42);
+      box-shadow:0 0 20px rgba(255,106,0,.38);
     }
 
-    .nav-item .nav-icon {
-      width: 34px;
-      height: 30px;
-      display: grid;
-      place-items: center;
-      border-radius: 10px;
+    .login-fields { gap:18px; }
+
+    .login-fields label {
+      margin:0 0 8px;
+      color:rgba(255,255,255,.7);
+      font-family:"Segoe UI",Arial,sans-serif;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.10em;
+      text-transform:uppercase;
     }
 
-    .nav-item svg { width: 20px; height: 20px; }
-
-    .nav-item:hover {
-      color: rgba(255,255,255,.85);
-      background: rgba(255,255,255,.035);
-      transform: translateY(-1px);
+    .login-input-wrap {
+      position:relative;
+      display:flex;
+      align-items:center;
+      min-height:58px;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:17px;
+      background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.025));
+      box-shadow:inset 0 1px rgba(255,255,255,.035), 0 14px 30px rgba(0,0,0,.12);
+      transition:border-color .2s ease, box-shadow .2s ease, background .2s ease;
     }
 
-    .nav-item.active {
-      color: #fff;
-      border-color: rgba(255,106,0,.20);
-      background: linear-gradient(145deg, rgba(255,106,0,.18), rgba(255,106,0,.055));
-      box-shadow: inset 0 1px rgba(255,255,255,.05), 0 14px 28px rgba(0,0,0,.18);
-      border-left-color: rgba(255,106,0,.2);
+    .login-input-wrap:focus-within {
+      border-color:rgba(255,118,28,.72);
+      background:rgba(255,255,255,.055);
+      box-shadow:0 0 0 4px rgba(255,106,0,.08), 0 14px 30px rgba(0,0,0,.15);
     }
 
-    .nav-item.active .nav-icon {
-      color: #ff8a32;
-      background: rgba(255,106,0,.13);
-      box-shadow: 0 0 18px rgba(255,106,0,.10);
+    .login-input-wrap > svg {
+      width:22px;
+      height:22px;
+      margin-left:18px;
+      flex:0 0 auto;
+      color:rgba(255,255,255,.72);
     }
 
-    .side-bottom {
-      margin-top: auto;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      padding: 13px 4px 7px;
-      color: rgba(255,255,255,.5);
+    .login-input-wrap input {
+      height:56px;
+      min-height:56px;
+      border:0;
+      border-radius:0;
+      background:transparent;
+      color:#fff;
+      box-shadow:none;
+      padding:0 16px;
+      font-family:"Segoe UI",Arial,sans-serif;
+      font-size:15px;
     }
 
-    .side-bottom strong {
-      font-size: 9px;
-      letter-spacing: .13em;
-      color: rgba(255,255,255,.58);
+    .login-input-wrap input:focus {
+      border:0;
+      box-shadow:none;
     }
 
-    .side-bottom small {
-      font-size: 7px;
-      letter-spacing: .11em;
-      color: rgba(255,255,255,.28);
+    .login-input-wrap input::placeholder { color:rgba(255,255,255,.30); }
+
+    .password-toggle {
+      width:48px;
+      height:48px;
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      margin-right:5px;
+      border:0;
+      border-radius:12px;
+      background:transparent;
+      color:rgba(255,255,255,.54);
+      cursor:pointer;
     }
 
-    .main {
-      padding: 26px 28px 30px 22px;
-      background:
-        radial-gradient(circle at 88% 7%, rgba(255,106,0,.055), transparent 26%),
-        linear-gradient(180deg, #eef1f4 0%, #f6f7f9 100%);
+    .password-toggle:hover {
+      color:#fff;
+      background:rgba(255,255,255,.05);
     }
 
-    .form-panel,
-    .workflow-box {
-      border-color: rgba(17,24,39,.07);
-      box-shadow: 0 18px 46px rgba(16,24,40,.09);
+    .password-toggle svg { width:22px; height:22px; }
+
+    .login-button-row {
+      grid-template-columns:1fr !important;
+      margin-top:8px;
     }
 
-    @media (max-width: 1120px) {
-      .app {
-        grid-template-columns: 84px minmax(0,1fr);
+    .login-submit {
+      min-height:58px;
+      justify-content:space-between;
+      padding:0 21px 0 24px;
+      border-radius:17px;
+      background:linear-gradient(135deg,#ff5e00,#ff8426);
+      color:#fff;
+      font-family:"Segoe UI",Arial,sans-serif;
+      font-size:15px;
+      font-weight:700;
+      box-shadow:0 18px 38px rgba(255,106,0,.20), inset 0 1px rgba(255,255,255,.22);
+      transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    }
+
+    .login-submit:hover {
+      transform:translateY(-2px);
+      filter:saturate(1.05);
+      box-shadow:0 22px 42px rgba(255,106,0,.28), inset 0 1px rgba(255,255,255,.26);
+    }
+
+    .login-submit svg { width:21px; height:21px; }
+
+    #authScreen .auth-status,
+    #firstAccessScreen .auth-status {
+      min-height:20px;
+      margin-top:2px;
+      color:#ffb47f;
+      font-family:"Segoe UI",Arial,sans-serif;
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    @media (max-width: 940px) {
+      .login-shell {
+        grid-template-columns:1fr;
+        min-height:auto;
+        max-width:680px;
       }
-      .sidebar { padding-inline: 8px; }
-      .brand-emblem { width: 190px; }
-      .top-action span { display:none; }
-      .top-action { width: 44px; justify-content:center; padding:0; }
-      .top-actions { gap:5px; }
-    }
-
-    @media (max-width: 900px) {
-      .auth-stage {
-        grid-template-columns: 1fr;
-        max-width: 620px;
-        min-height: auto;
+      .login-brand-panel {
+        min-height:340px;
+        padding:36px 38px;
+        border-right:0;
+        border-bottom:1px solid rgba(255,255,255,.08);
       }
-      .auth-visual {
-        min-height: 300px;
-        padding: 34px;
-        border-right: 0;
-        border-bottom: 1px solid rgba(255,255,255,.08);
-      }
-      .auth-brand-logo { width: 290px; margin-bottom: 24px; }
-      .auth-visual h1 { font-size: 38px; max-width: 520px; }
-      .auth-visual > p { display:none; }
-      .auth-tech-tags { margin-top:20px; }
-      .floating-chip { display:none; }
-
-      .app {
-        grid-template-columns: 1fr;
-        grid-template-rows: 82px 1fr;
-        grid-template-areas:
-          "top"
-          "main";
-      }
-
-      .sidebar { display:none !important; }
-      .topbar {
-        height: 70px;
-        margin: 8px 10px 0;
-        border-radius: 18px;
-      }
-      .main { padding: 14px; }
+      .login-main-logo { width:300px; margin-bottom:26px; }
+      .login-brand-panel h1 { font-size:42px; }
+      .login-brand-panel p { max-width:520px; }
+      .login-feature-row { display:none; }
+      .login-form-panel { padding:38px; }
+      .login-icon-mark { width:68px; height:68px; border-radius:22px; margin-bottom:20px; }
+      .login-icon-mark svg { width:34px; height:34px; }
+      .login-form-card h2 { font-size:38px; }
+      .login-title-line { margin:18px 0 28px; }
     }
 
     @media (max-width: 560px) {
-      .auth-screen { padding: 12px; }
-      .auth-stage { border-radius: 24px; }
-      .auth-visual {
-        min-height: 230px;
-        padding: 28px 24px;
+      #authScreen,
+      #firstAccessScreen { padding:10px; }
+      .login-shell { border-radius:24px; }
+      .login-brand-panel {
+        min-height:245px;
+        padding:28px 24px;
       }
-      .auth-kicker { margin-bottom: 14px; font-size: 9px; }
-      .auth-brand-logo { width: 230px; margin-bottom: 18px; }
-      .auth-visual h1 { font-size: 30px; }
-      .auth-tech-tags { display:none; }
-      .auth-card.auth-card-modern { padding: 30px 24px; }
-      .auth-card.auth-card-modern h2 { font-size: 28px; }
-      .auth-card-footer { margin-top:20px; }
-      .topbar { padding: 0 10px; }
-      .brand-emblem { width: 160px; max-width: 47vw; }
-      .user-box strong { max-width: 86px; }
+      .login-kicker { margin-bottom:16px; font-size:9px; letter-spacing:.20em; }
+      .login-main-logo { width:235px; margin-bottom:19px; }
+      .login-brand-panel h1 { font-size:31px; }
+      .login-accent-line { margin:17px 0 15px; height:3px; }
+      .login-brand-panel p { font-size:13px; line-height:1.5; }
+      .login-form-panel { padding:30px 24px 34px; }
+      .login-icon-mark { display:none; }
+      .login-form-card h2 { font-size:32px; }
+      .login-title-line { margin:16px 0 24px; }
+      .login-input-wrap { min-height:54px; border-radius:15px; }
+      .login-input-wrap input { min-height:52px; height:52px; font-size:14px; }
+      .login-submit { min-height:54px; border-radius:15px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .auth-screen::before,
-      .auth-screen::after,
-      .floating-chip,
-      .belt-orbit,
-      .status-dot,
-      .side-pulse {
-        animation: none !important;
+      #authScreen::before,
+      #authScreen::after,
+      #firstAccessScreen::before,
+      #firstAccessScreen::after,
+      .login-brand-flow {
+        animation:none !important;
       }
     }
 
@@ -1948,94 +1755,116 @@
 
 <body>
   <section class="auth-screen hidden" id="authScreen">
-    <div class="auth-stage">
-      <div class="auth-visual">
-        <div class="auth-visual-grid"></div>
-        <div class="auth-kicker">EXTREMO · CERTIFICATE SYSTEM</div>
-        <img class="auth-brand-logo" src="./assets/logos/extremo-brazilian-jiu-jitsu.png" alt="Extremo Brazilian Jiu-Jitsu" />
-        <h1>Disciplina dentro e fora do tatame.</h1>
-        <p>Emissão, aprovação e autenticação digital de certificados em um ambiente seguro para professores autorizados.</p>
-        <div class="auth-tech-tags">
-          <span>JIU-JÍTSU</span><span>FIREBASE</span><span>QR AUTH</span>
-        </div>
-        <div class="floating-chip chip-a">CERTIFICADO</div>
-        <div class="floating-chip chip-b">FAIXA</div>
-        <div class="floating-chip chip-c">AUTENTICADO</div>
-        <div class="belt-orbit belt-orbit-a"></div>
-        <div class="belt-orbit belt-orbit-b"></div>
-      </div>
-      <div class="auth-card auth-card-modern">
-        <div class="auth-card-badge">ACESSO RESTRITO</div>
-        <h2>Acesso dos professores</h2>
-        <p>Use o e-mail cadastrado e sua senha de acesso.</p>
-        <div class="auth-grid">
-          <div>
-            <label for="loginEmail">E-mail</label>
-            <input id="loginEmail" type="email" autocomplete="email" placeholder="professor@email.com" />
+    <div class="login-shell">
+      <section class="login-brand-panel" aria-label="Extremo Brazilian Jiu-Jítsu">
+        <div class="login-brand-noise"></div>
+        <div class="login-brand-flow flow-one"></div>
+        <div class="login-brand-flow flow-two"></div>
+        <div class="login-brand-content">
+          <div class="login-kicker"><span>EXTREMO</span> · SISTEMA DE CERTIFICADOS</div>
+          <img class="login-main-logo" src="./assets/logos/extremo-brazilian-jiu-jitsu.png" alt="Extremo Brazilian Jiu-Jítsu" />
+          <h1>DISCIPLINA<br>DENTRO E FORA<br>DO TATAME.</h1>
+          <div class="login-accent-line"></div>
+          <p>Emissão, aprovação e autenticação digital de certificados em um ambiente seguro para professores autorizados.</p>
+          <div class="login-feature-row" aria-hidden="true">
+            <span>Certificados</span>
+            <span>Jiu-Jítsu</span>
+            <span>Segurança</span>
           </div>
-          <div>
-            <label for="loginPassword">Senha</label>
-            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha" />
-          </div>
-          <div class="auth-buttons" style="grid-template-columns:1fr">
-            <button class="btn btn-orange auth-primary" type="button" id="emailLoginBtn">
-              <span>Entrar no sistema</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-            </button>
-          </div>
-          <div class="auth-status" id="authStatus"></div>
         </div>
-        <div class="auth-card-footer">
-          <span class="status-dot"></span>
-          Acesso protegido · Extremo Brazilian Jiu-Jítsu
+      </section>
+
+      <section class="login-form-panel">
+        <div class="login-form-card">
+          <div class="login-icon-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="12" cy="7" r="3.2"/>
+              <path d="M6 20c.7-4.2 2.7-6.2 6-6.2s5.3 2 6 6.2"/>
+              <path d="M9.1 12.6 12 15l2.9-2.4"/>
+            </svg>
+          </div>
+          <h2>Acesso dos<br>professores</h2>
+          <div class="login-title-line"></div>
+
+          <div class="auth-grid login-fields">
+            <div>
+              <label for="loginEmail">E-mail</label>
+              <div class="login-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+                <input id="loginEmail" type="email" autocomplete="email" placeholder="seu@email.com" />
+              </div>
+            </div>
+
+            <div>
+              <label for="loginPassword">Senha</label>
+              <div class="login-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha" />
+                <button class="password-toggle" type="button" id="toggleLoginPassword" aria-label="Mostrar ou ocultar senha">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.4"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-buttons login-button-row">
+              <button class="btn btn-orange login-submit" type="button" id="emailLoginBtn">
+                <span>Entrar no sistema</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+              </button>
+            </div>
+            <div class="auth-status" id="authStatus" role="status"></div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   </section>
 
   <section class="auth-screen hidden" id="firstAccessScreen">
-    <div class="auth-stage">
-      <div class="auth-visual">
-        <div class="auth-visual-grid"></div>
-        <div class="auth-kicker">PRIMEIRO ACESSO · SEGURANÇA</div>
-        <img class="auth-brand-logo" src="./assets/logos/extremo-brazilian-jiu-jitsu.png" alt="Extremo Brazilian Jiu-Jitsu" />
-        <h1>Sua conta. Sua senha. Seu acesso.</h1>
-        <p>Antes de entrar no sistema, substitua a senha provisória por uma senha pessoal e definitiva.</p>
-        <div class="auth-tech-tags">
-          <span>ACESSO SEGURO</span><span>SENHA PESSOAL</span><span>PROFESSOR</span>
+    <div class="login-shell">
+      <section class="login-brand-panel" aria-label="Extremo Brazilian Jiu-Jítsu">
+        <div class="login-brand-noise"></div>
+        <div class="login-brand-flow flow-one"></div>
+        <div class="login-brand-flow flow-two"></div>
+        <div class="login-brand-content">
+          <div class="login-kicker"><span>EXTREMO</span> · PRIMEIRO ACESSO</div>
+          <img class="login-main-logo" src="./assets/logos/extremo-brazilian-jiu-jitsu.png" alt="Extremo Brazilian Jiu-Jítsu" />
+          <h1>SUA CONTA.<br>SUA SENHA.<br>SEU ACESSO.</h1>
+          <div class="login-accent-line"></div>
+          <p>Defina uma senha pessoal para concluir seu primeiro acesso ao sistema.</p>
         </div>
-        <div class="floating-chip chip-a">1º ACESSO</div>
-        <div class="floating-chip chip-b">PROTEGIDO</div>
-        <div class="floating-chip chip-c">EXTREMO</div>
-        <div class="belt-orbit belt-orbit-a"></div>
-        <div class="belt-orbit belt-orbit-b"></div>
-      </div>
-      <div class="auth-card auth-card-modern">
-        <div class="auth-card-badge">TROCA OBRIGATÓRIA</div>
-        <h2>Defina sua nova senha</h2>
-        <p>A senha provisória não poderá ser usada novamente após esta etapa.</p>
-        <div class="auth-grid">
-          <div>
-            <label for="newPassword">Nova senha</label>
-            <input id="newPassword" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" />
+      </section>
+
+      <section class="login-form-panel">
+        <div class="login-form-card">
+          <div class="login-icon-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
           </div>
-          <div>
-            <label for="confirmNewPassword">Confirmar nova senha</label>
-            <input id="confirmNewPassword" type="password" autocomplete="new-password" placeholder="Repita a nova senha" />
+          <h2>Defina sua<br>nova senha</h2>
+          <div class="login-title-line"></div>
+
+          <div class="auth-grid login-fields">
+            <div>
+              <label for="newPassword">Nova senha</label>
+              <div class="login-input-wrap">
+                <input id="newPassword" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" />
+              </div>
+            </div>
+            <div>
+              <label for="confirmNewPassword">Confirmar nova senha</label>
+              <div class="login-input-wrap">
+                <input id="confirmNewPassword" type="password" autocomplete="new-password" placeholder="Repita a nova senha" />
+              </div>
+            </div>
+            <div class="auth-buttons login-button-row">
+              <button class="btn btn-orange login-submit" type="button" id="completeFirstAccessBtn">
+                <span>Salvar nova senha</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+              </button>
+            </div>
+            <div class="auth-status" id="firstAccessStatus" role="status"></div>
           </div>
-          <div class="auth-buttons" style="grid-template-columns:1fr">
-            <button class="btn btn-orange auth-primary" type="button" id="completeFirstAccessBtn">
-              <span>Salvar nova senha</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-            </button>
-          </div>
-          <div class="auth-status" id="firstAccessStatus"></div>
         </div>
-        <div class="auth-card-footer">
-          <span class="status-dot"></span>
-          A senha é pessoal e não fica visível para o administrador
-        </div>
-      </div>
+      </section>
     </div>
   </section>
 
@@ -2090,31 +1919,28 @@
     </header>
 
     <aside class="sidebar">
-      <div class="sidebar-brand-mark">
-        <img src="./assets/icons/favicon.png" alt="" />
-      </div>
-      <nav class="nav" aria-label="Navegação principal">
-        <button class="nav-item active" type="button" data-page-target="certificatePage" aria-label="Certificados">
-          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h7l3 3v15H7z"/><path d="M14 3v4h4"/><path d="M9 12h6"/><path d="M9 16h6"/></svg></span>
+      <nav class="nav">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
           <span>Certificados</span>
-        </button>
-        <button class="nav-item" type="button" data-page-target="historyPage" aria-label="Histórico">
-          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg></span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v6l4 2"/></svg>
           <span>Histórico</span>
-        </button>
-        <button class="nav-item hidden" type="button" id="sideQueueButton" data-page-target="pendingPage" aria-label="Pendências">
-          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 3h10v18H7z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>
-          <span>Pendências</span>
-        </button>
-        <button class="nav-item hidden" type="button" id="sideAdminButton" data-page-target="adminPage" aria-label="Gestão">
-          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c.8-4 2.8-6 6-6"/><path d="M17 11v8M13 15h8"/></svg></span>
-          <span>Gestão</span>
-        </button>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6l-.1.1a2 2 0 0 1-3.8 0L10 20a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1l-.1-.1a2 2 0 0 1 0-3.8L4 10a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6l.1-.1a2 2 0 0 1 3.8 0l.1.1a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05A1.7 1.7 0 0 0 19.4 9c.1.35.3.7.6 1l.1.1a2 2 0 0 1 0 3.8l-.1.1a1.7 1.7 0 0 0-.6 1z"/></svg>
+          <span>Configurações</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 10v7"/><path d="M12 7h.01"/></svg>
+          <span>Sobre</span>
+        </div>
       </nav>
+
       <div class="side-bottom">
-        <span class="side-pulse"></span>
-        <strong>EXTREMO</strong>
-        <small>SISTEMA ONLINE</small>
+        <img src="./assets/icons/favicon.png" alt="Extremo Norte" />
+        <div>Associação<br>Extremo Norte<br>de Lutas</div>
       </div>
     </aside>
 
@@ -2553,10 +2379,7 @@
     function showWorkspacePage(pageId) {
       const page = document.getElementById(pageId);
       if (!page) return;
-      $(".workspace-page").forEach(item => item.classList.toggle("active", item === page));
-      $(".nav-item[data-page-target]").forEach(item => {
-        item.classList.toggle("active", item.dataset.pageTarget === pageId);
-      });
+      $$(".workspace-page").forEach(item => item.classList.toggle("active", item === page));
       if (pageId === "historyPage") loadHistory();
       if (pageId === "pendingPage") loadPendingApprovals();
       if (pageId === "adminPage") {
@@ -3518,7 +3341,7 @@
     async function initFirebase() {
       if (isPlaceholderConfig()) {
         $("#authScreen").classList.remove("hidden");
-        setAuthStatus("Firebase ainda não configurado. Edite assets/js/firebase-config.js antes de publicar.");
+        setAuthStatus("Serviço temporariamente indisponível. Tente novamente mais tarde.");
         return;
       }
       try {
@@ -3530,7 +3353,7 @@
       } catch (error) {
         console.error(error);
         $("#authScreen").classList.remove("hidden");
-        setAuthStatus("Falha ao iniciar Firebase. Confira firebase-config.js.");
+        setAuthStatus("Não foi possível iniciar o acesso. Atualize a página e tente novamente.");
         return;
       }
 
@@ -3548,7 +3371,7 @@
           $("#appRoot").classList.add("hidden");
           $("#firstAccessScreen").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
-          const message = state.authNotice || "Firebase conectado. Informe seu e-mail e senha autorizados.";
+          const message = state.authNotice || "";
           state.authNotice = "";
           setAuthStatus(message);
           return;
@@ -3564,7 +3387,7 @@
         if (!snap.exists) {
           $("#appRoot").classList.add("hidden");
           $("#authScreen").classList.remove("hidden");
-          state.authNotice = `O e-mail ${email} ainda não está autorizado. Peça a um professor já autorizado para cadastrá-lo e a um admin para aprovar a solicitação.`;
+          state.authNotice = "Este e-mail não possui acesso autorizado. Procure o administrador.";
           await state.auth.signOut();
           return;
         }
@@ -3602,9 +3425,7 @@
         $("#userRoleLabel").textContent = roleLabel(state.profile.role);
         $("#userNameLabel").textContent = state.profile.name || email;
         $("#certificateQueueButton").classList.remove("hidden");
-        $("#sideQueueButton").classList.remove("hidden");
         $("#professorAccessButton").classList.toggle("hidden", !isAdmin());
-        $("#sideAdminButton").classList.toggle("hidden", !isAdmin());
         $("#certificateQueueLabel").textContent = isAdmin() ? "Aprovar Faixa" : "Pendente de aprovação";
         if (isAdmin()) {
           $("#professorAccessLabel").textContent = "Gerenciar acessos";
@@ -3620,7 +3441,7 @@
         updatePdfButtonText();
       } catch (error) {
         console.error(error);
-        setAuthStatus("Não foi possível carregar o perfil autorizado. Confira Firestore Rules e usersByEmail.");
+        setAuthStatus("Não foi possível validar seu acesso. Tente novamente.");
       }
     }
 
@@ -3665,7 +3486,7 @@
     function initAuthButtons() {
       const loginWithEmail = async () => {
         try {
-          if (!state.auth) return setAuthStatus("Firebase ainda está carregando. Aguarde alguns segundos e tente novamente.");
+          if (!state.auth) return setAuthStatus("O acesso ainda está carregando. Tente novamente em instantes.");
           setAuthStatus("Entrando...");
           await state.auth.signInWithEmailAndPassword($("#loginEmail").value.trim().toLowerCase(), $("#loginPassword").value);
         } catch (error) {
@@ -3675,6 +3496,15 @@
       };
 
       $("#emailLoginBtn").addEventListener("click", loginWithEmail);
+
+      const passwordToggle = $("#toggleLoginPassword");
+      if (passwordToggle) {
+        passwordToggle.addEventListener("click", () => {
+          const input = $("#loginPassword");
+          if (!input) return;
+          input.type = input.type === "password" ? "text" : "password";
+        });
+      }
       [$("#loginEmail"), $("#loginPassword")].forEach(input => {
         input.addEventListener("keydown", event => {
           if (event.key !== "Enter" || event.isComposing) return;
@@ -3754,7 +3584,7 @@
         window.addEventListener("resize", () => fitAll());
       } catch (error) {
         console.error("Falha ao iniciar a interface do certificado:", error);
-        setAuthStatus("Login disponível. Parte da interface do certificado apresentou um erro e será revisada.");
+        setAuthStatus("Não foi possível carregar todos os recursos. Atualize a página.");
       }
     }
 
